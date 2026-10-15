@@ -5,14 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hệ thống Quản lý Câu lạc bộ</title>
   <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
   <header class="app-header">
     <div class="container header-container">
       <h1 class="app-title">Quản lý Câu lạc bộ</h1>
-      <div id="system-health" class="health-badge health-checking">
-        <span class="health-dot"></span>
-        <span id="health-text">Đang kiểm tra hệ thống...</span>
+      <div class="nav-actions">
+        <div id="system-health" class="health-badge health-checking">
+          <span class="health-dot"></span>
+          <span id="health-text">Đang kiểm tra...</span>
+        </div>
+        <a href="users.html" id="users-nav-link" class="nav-link hidden">Quản lý người dùng</a>
+        <div id="auth-actions" class="user-badge">
+          <a href="login.html" id="login-nav-btn" class="btn btn-outline btn-sm">Đăng nhập</a>
+          <span id="home-user-greeting" class="user-name hidden"></span>
+          <button type="button" id="home-logout-btn" class="btn btn-outline btn-sm hidden">Đăng xuất</button>
+        </div>
       </div>
     </div>
   </header>

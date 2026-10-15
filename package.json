@@ -5,7 +5,9 @@
   "main": "backend/src/server.js",
   "scripts": {
     "test": "node --require ./backend/tests/setup/unit-env.js --test \"backend/tests/**/*.test.js\"",
-    "start": "node backend/src/server.js"
+    "start": "node backend/src/server.js",
+    "migrate": "node backend/scripts/migrate.js",
+    "create-admin": "node backend/scripts/create-admin.js"
   },
   "engines": {
     "node": ">=22 <23"

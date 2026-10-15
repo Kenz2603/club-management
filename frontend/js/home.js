@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const refreshBtn = document.getElementById('refresh-btn');
   const retryBtn = document.getElementById('retry-btn');
 
+  const usersNavLink = document.getElementById('users-nav-link');
+  const loginNavBtn = document.getElementById('login-nav-btn');
+  const homeUserGreeting = document.getElementById('home-user-greeting');
+  const homeLogoutBtn = document.getElementById('home-logout-btn');
+
+  let csrfToken = '';
+
   async function checkHealth() {
     try {
       const response = await fetch('/api/health');
@@ -23,6 +30,42 @@ document.addEventListener('DOMContentLoaded', () => {
       healthText.textContent = 'Mất kết nối hệ thống';
     }
   }
+
+  async function checkAuthStatus() {
+    try {
+      const response = await fetch('/api/auth/me');
+      if (!response.ok) {
+        return;
+      }
+      const result = await response.json();
+      if (result.success && result.data && result.data.user) {
+        const user = result.data.user;
+        csrfToken = result.data.csrfToken || '';
+
+        loginNavBtn.classList.add('hidden');
+        homeUserGreeting.textContent = user.full_name || user.username;
+        homeUserGreeting.classList.remove('hidden');
+        homeLogoutBtn.classList.remove('hidden');
+
+        if (user.role === 'admin') {
+          usersNavLink.classList.remove('hidden');
+        }
+      }
+    } catch {}
+  }
+
+  homeLogoutBtn.addEventListener('click', async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': csrfToken
+        }
+      });
+    } finally {
+      window.location.reload();
+    }
+  });
 
   function renderClubs(clubs) {
     clubsGrid.textContent = '';
@@ -114,5 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   checkHealth();
+  checkAuthStatus();
   loadClubs();
 });

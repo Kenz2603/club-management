@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Người dùng - Hệ thống Quản lý Câu lạc bộ</title>
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="container header-container">
+      <a href="index.html" class="app-title" style="text-decoration: none;">Quản lý Câu lạc bộ</a>
+      <div class="nav-actions">
+        <a href="index.html" class="nav-link">Trang chủ</a>
+        <a href="users.html" class="nav-link active">Người dùng</a>
+        <div class="user-badge">
+          <span id="user-greeting" class="user-name"></span>
+          <button type="button" id="logout-btn" class="btn btn-outline btn-sm">Đăng xuất</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <section class="section-card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Quản lý Tài khoản & Phân quyền</h2>
+          <p class="section-subtitle">Danh sách người dùng, vai trò và trạng thái hoạt động</p>
+        </div>
+      </div>
+
+      <div class="table-toolbar">
+        <div class="toolbar-filters">
+          <input type="text" id="search-input" class="form-control search-input" placeholder="Tìm tên, email, họ tên...">
+          <select id="filter-role" class="form-control filter-select">
+            <option value="">Tất cả vai trò</option>
+            <option value="admin">Quản trị viên (admin)</option>
+            <option value="manager">Quản lý (manager)</option>
+            <option value="viewer">Người xem (viewer)</option>
+          </select>
+          <select id="filter-status" class="form-control filter-select">
+            <option value="">Tất cả trạng thái</option>
+            <option value="active">Đang hoạt động (active)</option>
+            <option value="disabled">Đã vô hiệu hóa (disabled)</option>
+          </select>
+        </div>
+        <button type="button" id="open-create-modal-btn" class="btn btn-primary">+ Thêm tài khoản</button>
+      </div>
+
+      <div id="loading-state" class="state-container">
+        <div class="spinner"></div>
+        <p>Đang tải dữ liệu người dùng...</p>
+      </div>
+
+      <div id="error-state" class="state-container state-error hidden">
+        <p id="error-message">Không thể tải dữ liệu người dùng.</p>
+        <button id="retry-btn" class="btn btn-primary" type="button">Thử lại</button>
+      </div>
+
+      <div id="empty-state" class="state-container state-empty hidden">
+        <p class="empty-title">Không tìm thấy tài khoản phù hợp</p>
+        <p class="empty-desc">Không có người dùng nào khớp với bộ lọc hiện tại.</p>
+      </div>
+
+      <div id="table-container" class="table-responsive hidden">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Tên đăng nhập</th>
+              <th>Email</th>
+              <th>Họ và tên</th>
+              <th>Vai trò</th>
+              <th>Trạng thái</th>
+              <th>Ngày tạo</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+
+      <div id="pagination-bar" class="pagination-bar hidden">
+        <span id="pagination-info"></span>
+        <div class="pagination-controls">
+          <button type="button" id="prev-page-btn" class="btn btn-outline btn-sm">Trước</button>
+          <span id="page-current-indicator"></span>
+          <button type="button" id="next-page-btn" class="btn btn-outline btn-sm">Sau</button>
+          <select id="limit-select" class="form-control filter-select" style="min-width: 90px; padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+            <option value="10">10 dòng</option>
+            <option value="20">20 dòng</option>
+            <option value="50">50 dòng</option>
+          </select>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="user-modal" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="user-modal-title" class="modal-title">Thêm tài khoản mới</h3>
+        <button type="button" id="close-user-modal" class="modal-close">&times;</button>
+      </div>
+      <form id="user-form">
+        <div class="modal-body">
+          <div id="user-modal-alert" class="alert alert-danger hidden">
+            <span id="user-modal-alert-text"></span>
+          </div>
+
+          <input type="hidden" id="user-modal-id">
+
+          <div class="form-group">
+            <label for="user-modal-username" class="form-label">Tên đăng nhập *</label>
+            <input type="text" id="user-modal-username" class="form-control" required autocomplete="off">
+            <small class="form-text">3-50 ký tự, chữ cái, số, gạch dưới hoặc gạch ngang</small>
+          </div>
+
+          <div class="form-group">
+            <label for="user-modal-email" class="form-label">Email *</label>
+            <input type="email" id="user-modal-email" class="form-control" required autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label for="user-modal-fullname" class="form-label">Họ và tên</label>
+            <input type="text" id="user-modal-fullname" class="form-control" autocomplete="off">
+          </div>
+
+          <div class="form-group" id="user-modal-password-group">
+            <label for="user-modal-password" class="form-label">Mật khẩu ban đầu *</label>
+            <input type="password" id="user-modal-password" class="form-control" autocomplete="new-password">
+            <small class="form-text">Tối thiểu 8 ký tự</small>
+          </div>
+
+          <div class="form-group">
+            <label for="user-modal-role" class="form-label">Vai trò *</label>
+            <select id="user-modal-role" class="form-control" required>
+              <option value="viewer">Viewer (Người xem)</option>
+              <option value="manager">Manager (Quản lý)</option>
+              <option value="admin">Admin (Quản trị viên)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="cancel-user-modal" class="btn btn-outline">Hủy</button>
+          <button type="submit" id="save-user-btn" class="btn btn-primary">Lưu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="reset-modal" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="reset-modal-title" class="modal-title">Đặt lại mật khẩu</h3>
+        <button type="button" id="close-reset-modal" class="modal-close">&times;</button>
+      </div>
+      <form id="reset-form">
+        <div class="modal-body">
+          <div id="reset-modal-alert" class="alert alert-danger hidden">
+            <span id="reset-modal-alert-text"></span>
+          </div>
+
+          <input type="hidden" id="reset-user-id">
+
+          <div class="form-group">
+            <label for="reset-new-password" class="form-label">Mật khẩu mới *</label>
+            <input type="password" id="reset-new-password" class="form-control" required autocomplete="new-password">
+            <small class="form-text">Tối thiểu 8 ký tự</small>
+          </div>
+
+          <div class="form-group">
+            <label for="reset-confirm-password" class="form-label">Xác nhận mật khẩu mới *</label>
+            <input type="password" id="reset-confirm-password" class="form-control" required autocomplete="new-password">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="cancel-reset-modal" class="btn btn-outline">Hủy</button>
+          <button type="submit" id="save-reset-btn" class="btn btn-primary">Xác nhận</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <footer class="app-footer">
+    <div class="container footer-container">
+      <p>Hệ thống Quản lý Câu lạc bộ &copy; 2026</p>
+    </div>
+  </footer>
+
+  <script src="js/users.js"></script>
+</body>
+</html>

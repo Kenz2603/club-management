@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập - Hệ thống Quản lý Câu lạc bộ</title>
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="container header-container">
+      <a href="index.html" class="app-title" style="text-decoration: none;">Quản lý Câu lạc bộ</a>
+      <div class="nav-actions">
+        <a href="index.html" class="nav-link">Trang chủ</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <div class="login-wrapper">
+      <div class="login-card">
+        <div class="login-header">
+          <h2 class="login-title">Đăng nhập</h2>
+          <p class="login-desc">Nhập thông tin tài khoản để tiếp tục</p>
+        </div>
+
+        <div id="login-alert" class="alert alert-danger hidden" role="alert">
+          <span id="login-alert-text"></span>
+        </div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label for="username" class="form-label">Tên đăng nhập hoặc Email</label>
+            <input type="text" id="username" name="username" class="form-control" autocomplete="username" required autofocus>
+          </div>
+
+          <div class="form-group">
+            <label for="password" class="form-label">Mật khẩu</label>
+            <input type="password" id="password" name="password" class="form-control" autocomplete="current-password" required>
+          </div>
+
+          <div class="form-group">
+            <button type="submit" id="submit-btn" class="btn btn-primary btn-block">Đăng nhập</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <div class="container footer-container">
+      <p>Hệ thống Quản lý Câu lạc bộ &copy; 2026</p>
+    </div>
+  </footer>
+
+  <script src="js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+{
+  "version": "1.0.0",
+  "description": "Baseline schema manifest for migrations 001 to 005",
+  "tables": {
+    "clubs": {
+      "columns": [
+        "id",
+        "name",
+        "description",
+        "founded_date",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "primaryKey": ["id"]
+    },
+    "members": {
+      "columns": [
+        "id",
+        "club_id",
+        "full_name",
+        "email",
+        "phone",
+        "student_code",
+        "joined_date",
+        "role",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "primaryKey": ["id"],
+      "foreignKeys": [
+        {
+          "column": "club_id",
+          "referencedTable": "clubs",
+          "referencedColumn": "id"
+        }
+      ]
+    },
+    "activities": {
+      "columns": [
+        "id",
+        "club_id",
+        "title",
+        "description",
+        "location",
+        "start_time",
+        "end_time",
+        "max_participants",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "primaryKey": ["id"],
+      "foreignKeys": [
+        {
+          "column": "club_id",
+          "referencedTable": "clubs",
+          "referencedColumn": "id"
+        }
+      ]
+    },
+    "contributions": {
+      "columns": [
+        "id",
+        "member_id",
+        "amount",
+        "contribution_date",
+        "payment_method",
+        "status",
+        "description",
+        "created_at",
+        "updated_at"
+      ],
+      "primaryKey": ["id"],
+      "foreignKeys": [
+        {
+          "column": "member_id",
+          "referencedTable": "members",
+          "referencedColumn": "id"
+        }
+      ]
+    },
+    "meetings": {
+      "columns": [
+        "id",
+        "club_id",
+        "title",
+        "agenda",
+        "location",
+        "start_time",
+        "end_time",
+        "status",
+        "notes",
+        "created_at",
+        "updated_at"
+      ],
+      "primaryKey": ["id"],
+      "foreignKeys": [
+        {
+          "column": "club_id",
+          "referencedTable": "clubs",
+          "referencedColumn": "id"
+        }
+      ]
+    }
+  }
+}

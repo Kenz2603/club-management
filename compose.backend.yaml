@@ -12,6 +12,10 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:?required}
       MYSQL_USER: ${MYSQL_USER:?required}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?required}
+      APP_ORIGIN: ${APP_ORIGIN:-http://club.local}
+      TRUST_PROXY: ${TRUST_PROXY:-loopback,uniquelocal}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-8}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
