@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const clubsRouter = require('./routes/clubs');
 
 const app = express();
 
@@ -14,5 +15,7 @@ app.get('/api/health', (req, res) => {
     message: 'Server is running'
   });
 });
+
+app.use('/api/clubs', clubsRouter);
 
 module.exports = app;
