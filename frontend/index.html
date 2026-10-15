@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ thống Quản lý Câu lạc bộ</title>
+  <link rel="stylesheet" href="css/home.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="container header-container">
+      <h1 class="app-title">Quản lý Câu lạc bộ</h1>
+      <div id="system-health" class="health-badge health-checking">
+        <span class="health-dot"></span>
+        <span id="health-text">Đang kiểm tra hệ thống...</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <section class="section-card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Danh sách Câu lạc bộ</h2>
+          <p class="section-subtitle">Thông tin câu lạc bộ và trạng thái hoạt động</p>
+        </div>
+        <button id="refresh-btn" class="btn btn-outline" type="button">Làm mới</button>
+      </div>
+
+      <div id="loading-state" class="state-container">
+        <div class="spinner"></div>
+        <p>Đang tải dữ liệu câu lạc bộ...</p>
+      </div>
+
+      <div id="error-state" class="state-container state-error hidden">
+        <p id="error-message">Không thể tải dữ liệu câu lạc bộ.</p>
+        <button id="retry-btn" class="btn btn-primary" type="button">Thử lại</button>
+      </div>
+
+      <div id="empty-state" class="state-container state-empty hidden">
+        <p class="empty-title">Chưa có câu lạc bộ nào</p>
+        <p class="empty-desc">Hiện tại chưa có câu lạc bộ nào được tạo trong hệ thống.</p>
+      </div>
+
+      <div id="clubs-grid" class="clubs-grid hidden"></div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <div class="container footer-container">
+      <p>Hệ thống Quản lý Câu lạc bộ &copy; 2026</p>
+    </div>
+  </footer>
+
+  <script src="js/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+services:
+  mysql:
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
