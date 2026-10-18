@@ -280,7 +280,8 @@ test('PATCH /api/users/:id/status prevents disabling the last active admin with 
 
   const mockConnection = {
     beginTransaction: async () => {},
-    query: async (sql) => {
+    query: async (sql, params) => {
+      if (sql.includes('FROM users WHERE id = ?')) return pool.query(sql, params);
       if (sql.includes('FOR UPDATE')) {
         return [[{ id: 2, role: 'admin', status: 'active' }]];
       }
@@ -336,7 +337,8 @@ test('PUT /api/users/:id prevents demoting the last active admin with 409', asyn
 
   const mockConnection = {
     beginTransaction: async () => {},
-    query: async (sql) => {
+    query: async (sql, params) => {
+      if (sql.includes('FROM users WHERE id = ?')) return pool.query(sql, params);
       if (sql.includes('FOR UPDATE')) {
         return [[{ id: 1, role: 'admin', status: 'active' }]];
       }
@@ -521,6 +523,7 @@ test('Concurrent admin updates prevent leaving system with zero active admins', 
     return {
       beginTransaction: async () => {},
       query: async (sql, params) => {
+        if (sql.includes('FROM users WHERE id = ?')) return pool.query(sql, params);
         if (sql.includes('FOR UPDATE')) {
           await acquireLock();
           hasLock = true;

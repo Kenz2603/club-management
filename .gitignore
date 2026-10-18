@@ -8,3 +8,9 @@ dist/
 .DS_Store
 
 nginx/backup/
+
+secrets/
+backups/
+artifacts/
+test-results/
+playwright-report/

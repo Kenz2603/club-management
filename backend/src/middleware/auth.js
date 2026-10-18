@@ -60,7 +60,7 @@ async function authenticate(req, res, next) {
       expiresAt: sessionData.expires_at
     };
 
-    const lastActive = sessionData.last_active_at ? new Date(sessionData.last_active_at).getTime() : 0;
+    const lastActive = sessionData.last_active_at ? new Date(typeof sessionData.last_active_at === 'string' ? sessionData.last_active_at.replace(' ', 'T') + 'Z' : sessionData.last_active_at).getTime() : 0;
     if (Date.now() - lastActive > LAST_ACTIVE_THROTTLE_MS) {
       pool.query('UPDATE user_sessions SET last_active_at = NOW() WHERE id = ?', [sessionData.session_id]).catch(() => {});
     }
@@ -74,7 +74,7 @@ async function authenticate(req, res, next) {
 }
 
 function requireAuth(req, res, next) {
-  authenticate(req, res, (err) => {
+  return authenticate(req, res, (err) => {
     if (err) {
       return next(err);
     }

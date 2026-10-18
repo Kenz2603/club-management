@@ -1,0 +1,25 @@
+.workspace-nav { display:flex; flex-wrap:wrap; gap:.4rem; padding-top:1rem; }
+.workspace-nav a { padding:.55rem .8rem; text-decoration:none; color:#334155; border-radius:.5rem; }
+.workspace-nav a[aria-current=page] { color:white; background:#164e63; }
+h1 { font-size:1.8rem; color:#164e63; }
+.eyebrow { color:#64748b; letter-spacing:.1em; font-size:.7rem; margin-bottom:.4rem; }
+#notice { padding:.6rem 0; color:#164e63; }
+.metric-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin-bottom:2rem; }
+.metric { padding:1.2rem; border:1px solid #cbd5e1; border-radius:.6rem; background:#f0fdfa; }
+.metric strong { display:block; font-size:1.8rem; color:#164e63; overflow-wrap:anywhere; }
+.toolbar { display:flex; flex-wrap:wrap; gap:.7rem; margin-bottom:1rem; }
+.toolbar input,.toolbar select { flex:1; min-width:140px; }
+.pagination-controls { flex-wrap:wrap; }
+dialog { margin:auto; border:0; border-radius:.6rem; width:min(95vw,600px); max-height:90vh; overflow:auto; box-shadow:0 10px 40px #0004; }
+dialog::backdrop { background:#0f172a88; }
+#fields label { display:block; font-weight:600; margin-bottom:.3rem; }
+#fields input,#fields select,#fields textarea { margin-bottom:1rem; }
+#fields textarea { min-height:90px; }
+#form-error { padding:.6rem 1.5rem; }
+.detail-grid { display:grid; grid-template-columns:minmax(110px,1fr) minmax(0,2fr); gap:.7rem; }
+.detail-grid dd { overflow-wrap:anywhere; white-space:pre-wrap; }
+.profile { max-width:600px; }
+.profile label { display:block; margin:.8rem 0 .3rem; }
+.row-actions { display:flex; gap:.3rem; flex-wrap:wrap; }
+.btn:disabled { opacity:.55; cursor:not-allowed; }
+@media(max-width:600px) { .nav-actions,.user-badge { flex-wrap:wrap; } .app-title { font-size:1.1rem; } .section-card { padding:1rem; } .clubs-grid { grid-template-columns:minmax(0,1fr); } .pagination-controls { gap:.25rem; } h1 { font-size:1.4rem; } .detail-grid { grid-template-columns:1fr; } .detail-grid dt { font-weight:bold; } }

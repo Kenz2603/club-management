@@ -4,6 +4,7 @@ const { requireAuth } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const { verifyCsrf } = require('../middleware/csrf');
 
+const legacyResponse = require('../utils/legacy-response');
 const router = express.Router();
 
 router.use(requireAuth);
@@ -15,7 +16,7 @@ router.get('/', async (req, res, next) => {
     const result = await usersService.listUsers({ page, limit, q, role, status });
     return res.status(200).json({
       success: true,
-      data: result.users,
+      data: result.users.map(legacyResponse),
       pagination: result.pagination
     });
   } catch (error) {
@@ -28,7 +29,7 @@ router.get('/:id', async (req, res, next) => {
     const user = await usersService.getUserById(req.params.id);
     return res.status(200).json({
       success: true,
-      data: user
+      data: legacyResponse(user)
     });
   } catch (error) {
     next(error);
@@ -40,7 +41,7 @@ router.post('/', verifyCsrf, async (req, res, next) => {
     const newUser = await usersService.createUser(req.body || {});
     return res.status(201).json({
       success: true,
-      data: newUser
+      data: legacyResponse(newUser)
     });
   } catch (error) {
     next(error);
@@ -52,7 +53,7 @@ router.put('/:id', verifyCsrf, async (req, res, next) => {
     const updated = await usersService.updateUser(req.params.id, req.body || {}, req.user.id);
     return res.status(200).json({
       success: true,
-      data: updated
+      data: legacyResponse(updated)
     });
   } catch (error) {
     next(error);
@@ -65,14 +66,14 @@ router.patch('/:id/status', verifyCsrf, async (req, res, next) => {
     const updated = await usersService.updateUserStatus(req.params.id, status, req.user.id);
     return res.status(200).json({
       success: true,
-      data: updated
+      data: legacyResponse(updated)
     });
   } catch (error) {
     next(error);
   }
 });
 
-router.post('/:id/reset-password', verifyCsrf, async (req, res, next) => {
+router.post('/:id/reset-password', verifyCsrf, require('../middleware/sensitive-limiter'), async (req, res, next) => {
   try {
     const { new_password } = req.body || {};
     await usersService.resetUserPassword(req.params.id, new_password);

@@ -1,0 +1,38 @@
+name: Club Management checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: club-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      OPENSSL_BIN: /usr/bin/openssl
+      CLUB_TEST_BACKEND_IMAGE: club-management:verification
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:syntax
+      - run: node scripts/check-secrets.js --history-base=293cf25
+      - run: npm audit --audit-level=high
+      - run: npx playwright install --with-deps chromium
+      - run: docker build -t club-management:verification .
+      - run: npm run test:db
+      - run: npm run test:backup
+      - run: npm run test:config
+      - run: npm run test:observability
+      - run: npm run test:logging

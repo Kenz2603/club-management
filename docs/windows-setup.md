@@ -113,7 +113,7 @@ Kiểm tra trạng thái container:
 docker compose -p club-management-dev ps
 ```
 
-Container MySQL sẽ tự động khởi tạo 5 bảng nghiệp vụ từ thư mục `database/migrations` khi volume được tạo mới lần đầu.
+Container MySQL sẽ tự động khởi tạo 7 bảng nghiệp vụ từ thư mục `database/migrations` khi volume được tạo mới lần đầu.
 
 ### 5.3 Chạy Backend Cục bộ
 
@@ -146,3 +146,8 @@ Khi kết thúc phiên làm việc:
 ```powershell
 docker compose -p club-management-dev -f compose.yaml -f compose.dev.yaml down
 ```
+
+
+## Cập nhật hoàn thiện
+
+Xem README.md, TESTING.md và DEPLOYMENT.md trước khi chạy. Dev init đã có 001–007 nhưng chưa ledger: verify --all rồi adopt --through=007 --confirm trên DB dev đúng mục tiêu. Dùng node --env-file=.env cho server/CLI. APP_ORIGIN phải đúng http://localhost:3000; DB_PORT=3307 với dev override. Không copy các giá trị mật khẩu ví dụ vào production.

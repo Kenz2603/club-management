@@ -1,0 +1,19 @@
+services:
+  migrate:
+    build: .
+    profiles: [tools]
+    environment:
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?required}
+      MYSQL_USER: ${MYSQL_USER:?required}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?required}
+    command: [node, backend/scripts/migrate.js, status]
+    networks: [database_net]
+    depends_on:
+      mysql:
+        condition: service_healthy
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]

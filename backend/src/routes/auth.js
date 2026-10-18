@@ -63,7 +63,7 @@ router.get('/csrf', requireAuth, (req, res) => {
   });
 });
 
-router.put('/password', requireAuth, verifyCsrf, async (req, res, next) => {
+router.put('/password', requireAuth, verifyCsrf, require('../middleware/sensitive-limiter'), async (req, res, next) => {
   try {
     const { current_password, new_password } = req.body || {};
     await authService.changePassword(req.user.id, current_password, new_password, req.session.id);

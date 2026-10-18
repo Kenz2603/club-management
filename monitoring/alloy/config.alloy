@@ -1,0 +1,36 @@
+local.file_match "backend" {
+  path_targets = [{"__path__" = "/var/log/club/backend/*-json.log", "service" = "backend"}]
+}
+loki.source.file "backend" {
+  targets = local.file_match.backend.targets
+  forward_to = [loki.process.backend.receiver]
+}
+loki.process "backend" {
+  stage.docker {}
+  forward_to = [loki.write.local.receiver]
+}
+local.file_match "nginx_access" {
+  path_targets = [{"__path__" = "/var/log/club/nginx/club-management.access.log", "service" = "nginx", "stream" = "access"}]
+}
+loki.source.file "nginx_access" {
+  targets = local.file_match.nginx_access.targets
+  forward_to = [loki.write.local.receiver]
+}
+local.file_match "nginx_error" {
+  path_targets = [{"__path__" = "/var/log/club/nginx/club-management.error.log", "service" = "nginx", "stream" = "error"}]
+}
+loki.source.file "nginx_error" {
+  targets = local.file_match.nginx_error.targets
+  forward_to = [loki.process.nginx_error.receiver]
+}
+loki.process "nginx_error" {
+  stage.template {
+    source = "sanitized"
+    template = "nginx_error (details retained on host)"
+  }
+  stage.output { source = "sanitized" }
+  forward_to = [loki.write.local.receiver]
+}
+loki.write "local" {
+  endpoint { url = "http://loki:3100/loki/api/v1/push" }
+}

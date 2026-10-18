@@ -6,7 +6,12 @@ node_modules
 npm-debug.log*
 Dockerfile
 compose.yaml
-database
 docs
-monitoring
 nginx
+
+backend/tests
+secrets
+artifacts
+playwright-report
+test-results
+output

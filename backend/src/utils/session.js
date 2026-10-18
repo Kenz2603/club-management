@@ -31,7 +31,7 @@ function verifyCsrfToken(csrfToken, csrfSecret, sessionId) {
   }
 
   const expectedToken = createCsrfToken(csrfSecret, sessionId);
-  if (csrfToken.length !== expectedToken.length) {
+  if (!/^[0-9a-f]{64}$/.test(csrfToken) || Buffer.byteLength(csrfToken) !== Buffer.byteLength(expectedToken)) {
     return false;
   }
 
