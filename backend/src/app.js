@@ -7,7 +7,18 @@ const usersRouter = require('./routes/users');
 const resourceRouter = require('./routes/resources');
 const resourceService = require('./services/resources.service');
 const { requireAuth } = require('./middleware/auth');
+const pool = require('./config/database');
 const app = express();
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'");
+  if (req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
+  next();
+});
+
 
 if (process.env.TRUST_PROXY === 'true' || process.env.TRUST_PROXY === '1') {
   app.set('trust proxy', 'loopback');
@@ -37,6 +48,10 @@ app.use('/api/manage/clubs', resourceRouter('clubs'));
 for (const name of ['members', 'activities', 'meetings', 'contributions']) app.use(`/api/${name}`, resourceRouter(name));
 app.get('/api/catalog', requireAuth, (req, res) => res.json({ success: true, data: require('./domain/resources') }));
 app.get('/api/dashboard', requireAuth, async (req, res) => res.json({ success: true, data: await resourceService.dashboard() }));
+
+app.get('/api/ready', async (req, res, next) => {
+  try { await pool.query('SELECT 1'); res.json({ status: 'ok', database: 'ready' }); } catch { res.status(503).json({ status: 'unavailable', database: 'unavailable' }); }
+});
 
 app.use('/api', (req, res) => {
   res.status(404).json({
