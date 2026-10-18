@@ -1,3 +1,5 @@
+const validation = require('../utils/validation');
+const transaction = require('../utils/transaction');
 const pool = require('../config/database');
 const { hashPassword } = require('../utils/password');
 
@@ -53,6 +55,7 @@ async function listUsers({ page = 1, limit = 20, q = '', role = '', status = '' 
 }
 
 async function getUserById(id) {
+  validation.id(id);
   const [rows] = await pool.query(
     'SELECT id, username, email, full_name, role, status, last_login_at, created_at, updated_at FROM users WHERE id = ? LIMIT 1',
     [id]
@@ -66,12 +69,14 @@ async function getUserById(id) {
 }
 
 async function createUser({ username, email, password, full_name, role = 'viewer' }) {
-  if (!username || !/^[a-zA-Z0-9_-]{3,50}$/.test(username)) {
+  if (typeof username !== 'string' || !username || !/^[a-zA-Z0-9_-]{3,50}$/.test(username)) {
     const err = new Error('Tên đăng nhập phải có từ 3 đến 50 ký tự, gồm chữ cái, số, gạch dưới hoặc gạch ngang');
     err.statusCode = 400;
     throw err;
   }
 
+  validation.email(email);
+  validation.password(password);
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     const err = new Error('Định dạng email không hợp lệ');
     err.statusCode = 400;
@@ -118,24 +123,30 @@ async function createUser({ username, email, password, full_name, role = 'viewer
 }
 
 async function updateUser(id, { full_name, email, role }, currentAdminId) {
-  const targetUser = await getUserById(id);
+  if (full_name !== undefined) validation.text(full_name, 'Họ và tên', 150);
+  if (email !== undefined) validation.email(email);
+  let targetUser = await getUserById(id);
   const connection = await pool.getConnection();
 
   try {
     await connection.beginTransaction();
 
-    if (role && role !== targetUser.role && targetUser.role === 'admin') {
+    if (role !== undefined) {
       const [lockedAdmins] = await connection.query(
         'SELECT id, role, status FROM users WHERE role = "admin" AND status = "active" FOR UPDATE'
       );
       const isTargetActiveAdmin = lockedAdmins.some(a => Number(a.id) === Number(id));
-      if (isTargetActiveAdmin && lockedAdmins.length <= 1) {
+      if (role !== 'admin' && isTargetActiveAdmin && lockedAdmins.length <= 1) {
         await connection.rollback();
         const err = new Error('Không thể hạ quyền quản trị viên duy nhất còn lại trong hệ thống');
         err.statusCode = 409;
         throw err;
       }
     }
+
+    const [lockedTargets] = await connection.query('SELECT id, username, email, full_name, role, status FROM users WHERE id = ? FOR UPDATE', [id]);
+    if (!lockedTargets.length) validation.fail('Không tìm thấy người dùng', 404);
+    targetUser = lockedTargets[0];
 
     if (email && email !== targetUser.email) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -179,7 +190,7 @@ async function updateUser(id, { full_name, email, role }, currentAdminId) {
       [updatedFullName, updatedEmail, updatedRole, id]
     );
 
-    if (role && role !== targetUser.role) {
+    if (role !== undefined && role !== targetUser.role) {
       await connection.query(
         'UPDATE user_sessions SET revoked_at = NOW() WHERE user_id = ? AND revoked_at IS NULL',
         [id]
@@ -210,13 +221,13 @@ async function updateUserStatus(id, newStatus, currentAdminId) {
     throw err;
   }
 
-  const targetUser = await getUserById(id);
+  let targetUser = await getUserById(id);
   const connection = await pool.getConnection();
 
   try {
     await connection.beginTransaction();
 
-    if (newStatus === 'disabled' && targetUser.role === 'admin') {
+    if (newStatus === 'disabled') {
       const [lockedAdmins] = await connection.query(
         'SELECT id, role, status FROM users WHERE role = "admin" AND status = "active" FOR UPDATE'
       );
@@ -229,6 +240,8 @@ async function updateUserStatus(id, newStatus, currentAdminId) {
       }
     }
 
+    const [lockedTargets] = await connection.query('SELECT id, username, email, full_name, role, status FROM users WHERE id = ? FOR UPDATE', [id]);
+    if (!lockedTargets.length) validation.fail('Không tìm thấy người dùng', 404);
     await connection.query('UPDATE users SET status = ? WHERE id = ?', [newStatus, id]);
 
     if (newStatus === 'disabled') {
@@ -256,18 +269,14 @@ async function resetUserPassword(id, newPassword) {
     throw err;
   }
 
+  validation.password(newPassword);
   await getUserById(id);
   const passwordHash = await hashPassword(newPassword);
-
-  await pool.query(
-    'UPDATE users SET password_hash = ?, password_changed_at = NOW() WHERE id = ?',
-    [passwordHash, id]
-  );
-
-  await pool.query(
-    'UPDATE user_sessions SET revoked_at = NOW() WHERE user_id = ? AND revoked_at IS NULL',
-    [id]
-  );
+  await transaction(async (connection) => {
+    await connection.query('SELECT id, username, email, full_name, role, status FROM users WHERE id = ? FOR UPDATE', [id]);
+    await connection.query('UPDATE users SET password_hash = ?, password_changed_at = NOW() WHERE id = ?', [passwordHash, id]);
+    await connection.query('UPDATE user_sessions SET revoked_at = NOW() WHERE user_id = ? AND revoked_at IS NULL', [id]);
+  });
 
   return { success: true };
 }

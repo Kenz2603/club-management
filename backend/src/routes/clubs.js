@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/database');
 
+const legacyResponse = require('../utils/legacy-response');
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -11,7 +12,7 @@ router.get('/', async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: clubs
+      data: clubs.map(legacyResponse)
     });
   } catch (error) {
     process.stderr.write(`Failed to fetch clubs: ${error.message}\n`);

@@ -22,7 +22,12 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   maxIdle: 5,
   idleTimeout: 60000,
-  queueLimit: 0,
+  queueLimit: 100,
+  dateStrings: true,
+  supportBigNumbers: true,
+  bigNumberStrings: false,
+  timezone: '+00:00',
+  connectTimeout: 5000,
   enableKeepAlive: true
 });
 
