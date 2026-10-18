@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const pool = require('../src/config/database');
+const { verifySchema, manifest } = require('./schema-verifier');
 
 const MIGRATIONS_DIR = path.resolve(__dirname, '../../database/migrations');
 const MANIFEST_PATH = path.resolve(__dirname, '../../database/schema/baseline-001-005.json');
@@ -14,11 +15,11 @@ function computeChecksum(content) {
 
 function getMigrationFiles() {
   if (!fs.existsSync(MIGRATIONS_DIR)) {
-    return [];
+    throw new Error('Migration directory is missing');
   }
-  return fs.readdirSync(MIGRATIONS_DIR)
-    .filter(file => file.endsWith('.sql'))
-    .sort();
+  const files = fs.readdirSync(MIGRATIONS_DIR).filter(file => /^\d{3}_[a-z_]+\.sql$/.test(file)).sort();
+  if (!files.length) throw new Error('No migrations found');
+  return files;
 }
 
 async function ensureMigrationTable(connection) {
@@ -77,62 +78,24 @@ async function runStatus() {
   }
 }
 
-async function runVerify() {
-  if (!fs.existsSync(MANIFEST_PATH)) {
-    process.stderr.write(`Manifest file not found: ${MANIFEST_PATH}\n`);
-    return false;
-  }
-
-  const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+async function runVerify(all = false) {
   const connection = await pool.getConnection();
-  let hasErrors = false;
-
   try {
-    process.stdout.write('\n=== SCHEMA VERIFICATION ===\n');
-    for (const [tableName, tableSpec] of Object.entries(manifest.tables)) {
-      const [columns] = await connection.query(
-        'SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ?',
-        [tableName]
-      );
-
-      if (columns.length === 0) {
-        process.stderr.write(`[MISSING TABLE] Table '${tableName}' does not exist\n`);
-        hasErrors = true;
-        continue;
-      }
-
-      const existingCols = new Set(columns.map(c => c.column_name || c.COLUMN_NAME));
-      for (const expectedCol of tableSpec.columns) {
-        if (!existingCols.has(expectedCol)) {
-          process.stderr.write(`[MISSING COLUMN] Table '${tableName}' is missing column '${expectedCol}'\n`);
-          hasErrors = true;
-        }
-      }
-
-      if (!hasErrors) {
-        process.stdout.write(`[OK] Table '${tableName}' matches manifest\n`);
-      }
-    }
-
-    if (hasErrors) {
-      process.stderr.write('\nSchema verification FAILED.\n');
-      return false;
-    }
-
-    process.stdout.write('\nSchema verification PASSED: All baseline tables match manifest.\n');
-    return true;
-  } finally {
-    connection.release();
-  }
+    const tables = Object.keys(manifest).filter(table => all || manifest[table].file.slice(0, 3) <= '005');
+    const errors = await verifySchema(connection, tables);
+    for (const error of errors) process.stderr.write(error + '\n');
+    process.stdout.write(errors.length ? 'Schema verification FAILED\n' : 'Schema verification PASSED\n');
+    return !errors.length;
+  } finally { connection.release(); }
 }
 
-async function runBaseline(confirm) {
+async function runBaseline(confirm, all = false) {
   if (!confirm) {
     process.stdout.write('[DRY-RUN] Missing --confirm. Use "node backend/scripts/migrate.js baseline --confirm" to apply.\n');
     return false;
   }
 
-  const verified = await runVerify();
+  const verified = await runVerify(all);
   if (!verified) {
     process.stderr.write('Cannot baseline: Schema verification failed.\n');
     return false;
@@ -141,14 +104,21 @@ async function runBaseline(confirm) {
   const connection = await pool.getConnection();
   try {
     const [lockRows] = await connection.query('SELECT GET_LOCK(?, 10) as lockAcquired', [ADVISORY_LOCK_NAME]);
-    if (!lockRows[0] || lockRows[0].lockAcquired !== 1) {
+    if (!lockRows[0] || Number(lockRows[0].lockAcquired) !== 1) {
       process.stderr.write('Failed to acquire advisory lock. Another operation may be running.\n');
       return false;
     }
     await ensureMigrationTable(connection);
     const appliedMap = await getAppliedMigrations(connection);
 
-    const baselineFiles = ['001_create_clubs.sql', '002_create_members.sql', '003_create_activities.sql', '004_create_contributions.sql', '005_create_meetings.sql'];
+    const baselineFiles = getMigrationFiles().filter(file => file.slice(0, 3) <= (all ? '007' : '005'));
+    const tables = Object.keys(manifest).filter(table => all || manifest[table].file.slice(0, 3) <= '005');
+    const drift = await verifySchema(connection, tables);
+    if (drift.length) throw new Error('Schema changed before baseline: ' + drift.join('; '));
+    for (const file of baselineFiles) {
+      const checksum = computeChecksum(fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8'));
+      if (appliedMap.has(file) && appliedMap.get(file).checksum !== checksum) throw new Error('Checksum mismatch: ' + file);
+    }
 
     for (const file of baselineFiles) {
       const filePath = path.join(MIGRATIONS_DIR, file);
@@ -160,6 +130,7 @@ async function runBaseline(confirm) {
       const checksum = computeChecksum(content);
 
       if (appliedMap.has(file)) {
+        if (appliedMap.get(file).checksum !== checksum) throw new Error('Checksum mismatch: ' + file);
         process.stdout.write(`[ALREADY BASELINED] ${file}\n`);
       } else {
         await connection.query(
@@ -173,8 +144,7 @@ async function runBaseline(confirm) {
     process.stdout.write('\nBaseline recorded successfully in schema_migrations.\n');
     return true;
   } finally {
-    await connection.query('SELECT RELEASE_LOCK(?)', [ADVISORY_LOCK_NAME]);
-    connection.release();
+    try { await connection.query('SELECT RELEASE_LOCK(?)', [ADVISORY_LOCK_NAME]); } finally { connection.release(); }
   }
 }
 
@@ -198,7 +168,7 @@ async function runUp(confirm) {
   const connection = await pool.getConnection();
   try {
     const [lockRows] = await connection.query('SELECT GET_LOCK(?, 10) as lockAcquired', [ADVISORY_LOCK_NAME]);
-    if (!lockRows[0] || lockRows[0].lockAcquired !== 1) {
+    if (!lockRows[0] || Number(lockRows[0].lockAcquired) !== 1) {
       process.stderr.write('Failed to acquire advisory lock. Another migration may be running.\n');
       return false;
     }
@@ -252,8 +222,7 @@ async function runUp(confirm) {
     process.stdout.write('\nAll pending migrations applied successfully.\n');
     return true;
   } finally {
-    await connection.query('SELECT RELEASE_LOCK(?)', [ADVISORY_LOCK_NAME]);
-    connection.release();
+    try { await connection.query('SELECT RELEASE_LOCK(?)', [ADVISORY_LOCK_NAME]); } finally { connection.release(); }
   }
 }
 
@@ -267,13 +236,16 @@ async function main() {
     if (command === 'status') {
       success = await runStatus();
     } else if (command === 'verify') {
-      success = await runVerify();
+      success = await runVerify(args.includes('--all'));
     } else if (command === 'baseline') {
       success = await runBaseline(confirm);
+    } else if (command === 'adopt') {
+      if (!args.includes('--through=007')) throw new Error('adopt requires --through=007');
+      success = await runBaseline(confirm, true);
     } else if (command === 'up') {
       success = await runUp(confirm);
     } else {
-      process.stderr.write(`Unknown command: ${command}. Allowed commands: status, verify, baseline, up\n`);
+      process.stderr.write(`Unknown command: ${command}. Allowed commands: status, verify, baseline, adopt, up\n`);
       success = false;
     }
   } catch (err) {

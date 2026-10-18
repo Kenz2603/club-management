@@ -1,0 +1,745 @@
+{
+  "clubs": {
+    "file": "001_create_clubs.sql",
+    "columns": {
+      "id": {
+        "type": "bigint unsigned",
+        "nullable": false,
+        "default": null,
+        "auto": true,
+        "update": false
+      },
+      "name": {
+        "type": "varchar(150)",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "description": {
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "founded_date": {
+        "type": "date",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "status": {
+        "type": "enum('active','inactive')",
+        "nullable": false,
+        "default": "active",
+        "auto": false,
+        "update": false
+      },
+      "created_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": false
+      },
+      "updated_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": true
+      }
+    },
+    "indexes": {
+      "PRIMARY": {
+        "columns": [
+          "id"
+        ],
+        "unique": true
+      }
+    },
+    "foreign": [],
+    "checks": {}
+  },
+  "members": {
+    "file": "002_create_members.sql",
+    "columns": {
+      "id": {
+        "type": "bigint unsigned",
+        "nullable": false,
+        "default": null,
+        "auto": true,
+        "update": false
+      },
+      "club_id": {
+        "type": "bigint unsigned",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "full_name": {
+        "type": "varchar(150)",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "email": {
+        "type": "varchar(191)",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "phone": {
+        "type": "varchar(20)",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "student_code": {
+        "type": "varchar(50)",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "joined_date": {
+        "type": "date",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "role": {
+        "type": "enum('member','leader','vice_leader')",
+        "nullable": false,
+        "default": "member",
+        "auto": false,
+        "update": false
+      },
+      "status": {
+        "type": "enum('active','inactive')",
+        "nullable": false,
+        "default": "active",
+        "auto": false,
+        "update": false
+      },
+      "created_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": false
+      },
+      "updated_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": true
+      }
+    },
+    "indexes": {
+      "PRIMARY": {
+        "columns": [
+          "id"
+        ],
+        "unique": true
+      },
+      "uq_members_club_email": {
+        "columns": [
+          "club_id",
+          "email"
+        ],
+        "unique": true
+      },
+      "idx_members_club_status": {
+        "columns": [
+          "club_id",
+          "status"
+        ],
+        "unique": false
+      }
+    },
+    "foreign": [
+      {
+        "name": "fk_members_club",
+        "column": "club_id",
+        "table": "clubs",
+        "target": "id",
+        "update": "CASCADE",
+        "delete": "RESTRICT"
+      }
+    ],
+    "checks": {}
+  },
+  "activities": {
+    "file": "003_create_activities.sql",
+    "columns": {
+      "id": {
+        "type": "bigint unsigned",
+        "nullable": false,
+        "default": null,
+        "auto": true,
+        "update": false
+      },
+      "club_id": {
+        "type": "bigint unsigned",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "title": {
+        "type": "varchar(200)",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "description": {
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "location": {
+        "type": "varchar(255)",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "start_time": {
+        "type": "datetime",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "end_time": {
+        "type": "datetime",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "max_participants": {
+        "type": "int unsigned",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "status": {
+        "type": "enum('planned','ongoing','completed','cancelled')",
+        "nullable": false,
+        "default": "planned",
+        "auto": false,
+        "update": false
+      },
+      "created_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": false
+      },
+      "updated_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": true
+      }
+    },
+    "indexes": {
+      "PRIMARY": {
+        "columns": [
+          "id"
+        ],
+        "unique": true
+      },
+      "idx_activities_club_start": {
+        "columns": [
+          "club_id",
+          "start_time"
+        ],
+        "unique": false
+      },
+      "idx_activities_status": {
+        "columns": [
+          "status"
+        ],
+        "unique": false
+      }
+    },
+    "foreign": [
+      {
+        "name": "fk_activities_club",
+        "column": "club_id",
+        "table": "clubs",
+        "target": "id",
+        "update": "CASCADE",
+        "delete": "RESTRICT"
+      }
+    ],
+    "checks": {
+      "chk_activities_time": "end_time > start_time"
+    }
+  },
+  "contributions": {
+    "file": "004_create_contributions.sql",
+    "columns": {
+      "id": {
+        "type": "bigint unsigned",
+        "nullable": false,
+        "default": null,
+        "auto": true,
+        "update": false
+      },
+      "member_id": {
+        "type": "bigint unsigned",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "amount": {
+        "type": "decimal(12,2)",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "contribution_date": {
+        "type": "date",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "payment_method": {
+        "type": "enum('cash','bank_transfer','other')",
+        "nullable": false,
+        "default": "cash",
+        "auto": false,
+        "update": false
+      },
+      "status": {
+        "type": "enum('pending','confirmed','cancelled')",
+        "nullable": false,
+        "default": "pending",
+        "auto": false,
+        "update": false
+      },
+      "description": {
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "created_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": false
+      },
+      "updated_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": true
+      }
+    },
+    "indexes": {
+      "PRIMARY": {
+        "columns": [
+          "id"
+        ],
+        "unique": true
+      },
+      "idx_contributions_member_date": {
+        "columns": [
+          "member_id",
+          "contribution_date"
+        ],
+        "unique": false
+      },
+      "idx_contributions_status": {
+        "columns": [
+          "status"
+        ],
+        "unique": false
+      }
+    },
+    "foreign": [
+      {
+        "name": "fk_contributions_member",
+        "column": "member_id",
+        "table": "members",
+        "target": "id",
+        "update": "CASCADE",
+        "delete": "RESTRICT"
+      }
+    ],
+    "checks": {
+      "chk_contributions_amount": "amount > 0"
+    }
+  },
+  "meetings": {
+    "file": "005_create_meetings.sql",
+    "columns": {
+      "id": {
+        "type": "bigint unsigned",
+        "nullable": false,
+        "default": null,
+        "auto": true,
+        "update": false
+      },
+      "club_id": {
+        "type": "bigint unsigned",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "title": {
+        "type": "varchar(200)",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "agenda": {
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "location": {
+        "type": "varchar(255)",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "start_time": {
+        "type": "datetime",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "end_time": {
+        "type": "datetime",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "status": {
+        "type": "enum('scheduled','completed','cancelled')",
+        "nullable": false,
+        "default": "scheduled",
+        "auto": false,
+        "update": false
+      },
+      "notes": {
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "created_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": false
+      },
+      "updated_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": true
+      }
+    },
+    "indexes": {
+      "PRIMARY": {
+        "columns": [
+          "id"
+        ],
+        "unique": true
+      },
+      "idx_meetings_club_start": {
+        "columns": [
+          "club_id",
+          "start_time"
+        ],
+        "unique": false
+      },
+      "idx_meetings_status": {
+        "columns": [
+          "status"
+        ],
+        "unique": false
+      }
+    },
+    "foreign": [
+      {
+        "name": "fk_meetings_club",
+        "column": "club_id",
+        "table": "clubs",
+        "target": "id",
+        "update": "CASCADE",
+        "delete": "RESTRICT"
+      }
+    ],
+    "checks": {
+      "chk_meetings_time": "end_time > start_time"
+    }
+  },
+  "users": {
+    "file": "006_create_users.sql",
+    "columns": {
+      "id": {
+        "type": "bigint unsigned",
+        "nullable": false,
+        "default": null,
+        "auto": true,
+        "update": false
+      },
+      "username": {
+        "type": "varchar(50)",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "email": {
+        "type": "varchar(191)",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "password_hash": {
+        "type": "varchar(255)",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "full_name": {
+        "type": "varchar(150)",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "role": {
+        "type": "enum('admin','manager','viewer')",
+        "nullable": false,
+        "default": "viewer",
+        "auto": false,
+        "update": false
+      },
+      "status": {
+        "type": "enum('active','disabled')",
+        "nullable": false,
+        "default": "active",
+        "auto": false,
+        "update": false
+      },
+      "last_login_at": {
+        "type": "datetime",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "password_changed_at": {
+        "type": "datetime",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": false
+      },
+      "created_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": false
+      },
+      "updated_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": true
+      }
+    },
+    "indexes": {
+      "PRIMARY": {
+        "columns": [
+          "id"
+        ],
+        "unique": true
+      },
+      "uq_users_username": {
+        "columns": [
+          "username"
+        ],
+        "unique": true
+      },
+      "uq_users_email": {
+        "columns": [
+          "email"
+        ],
+        "unique": true
+      },
+      "idx_users_role": {
+        "columns": [
+          "role"
+        ],
+        "unique": false
+      },
+      "idx_users_status": {
+        "columns": [
+          "status"
+        ],
+        "unique": false
+      }
+    },
+    "foreign": [],
+    "checks": {}
+  },
+  "user_sessions": {
+    "file": "007_create_user_sessions.sql",
+    "columns": {
+      "id": {
+        "type": "bigint unsigned",
+        "nullable": false,
+        "default": null,
+        "auto": true,
+        "update": false
+      },
+      "user_id": {
+        "type": "bigint unsigned",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "token_hash": {
+        "type": "char(64)",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "csrf_secret": {
+        "type": "char(64)",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "ip_address": {
+        "type": "varchar(45)",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "user_agent": {
+        "type": "varchar(255)",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "created_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": false
+      },
+      "last_active_at": {
+        "type": "timestamp",
+        "nullable": false,
+        "default": "current_timestamp",
+        "auto": false,
+        "update": false
+      },
+      "expires_at": {
+        "type": "datetime",
+        "nullable": false,
+        "default": null,
+        "auto": false,
+        "update": false
+      },
+      "revoked_at": {
+        "type": "datetime",
+        "nullable": true,
+        "default": null,
+        "auto": false,
+        "update": false
+      }
+    },
+    "indexes": {
+      "PRIMARY": {
+        "columns": [
+          "id"
+        ],
+        "unique": true
+      },
+      "uq_sessions_token_hash": {
+        "columns": [
+          "token_hash"
+        ],
+        "unique": true
+      },
+      "idx_sessions_user_active": {
+        "columns": [
+          "user_id",
+          "revoked_at",
+          "expires_at"
+        ],
+        "unique": false
+      },
+      "idx_sessions_expires": {
+        "columns": [
+          "expires_at"
+        ],
+        "unique": false
+      }
+    },
+    "foreign": [
+      {
+        "name": "fk_sessions_user",
+        "column": "user_id",
+        "table": "users",
+        "target": "id",
+        "update": "CASCADE",
+        "delete": "CASCADE"
+      }
+    ],
+    "checks": {}
+  }
+}
