@@ -1,0 +1,36 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+positions:
+  filename: /positions/positions.yml
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+scrape_configs:
+  - job_name: club-backend
+    static_configs:
+      - targets: [localhost]
+        labels:
+          service: backend
+          __path__: /var/log/club/backend/*-json.log
+    pipeline_stages:
+      - docker: {}
+  - job_name: club-nginx-access
+    static_configs:
+      - targets: [localhost]
+        labels:
+          service: nginx
+          stream: access
+          __path__: /var/log/club/nginx/club-management.access.log
+  - job_name: club-nginx-error
+    static_configs:
+      - targets: [localhost]
+        labels:
+          service: nginx
+          stream: error
+          __path__: /var/log/club/nginx/club-management.error.log
+    pipeline_stages:
+      - template:
+          source: sanitized
+          template: nginx_error (details retained on host)
+      - output:
+          source: sanitized

@@ -1,0 +1,46 @@
+services:
+  loki:
+    image: grafana/loki:3.5.5
+    restart: unless-stopped
+    command: [-config.file=/etc/loki/loki.yml]
+    volumes:
+      - ./monitoring/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    networks: [monitoring_net]
+    mem_limit: 384m
+    cpus: 0.5
+    security_opt: [no-new-privileges:true]
+  alloy:
+    image: grafana/alloy:v1.11.0
+    restart: unless-stopped
+    command: [run, --storage.path=/var/lib/alloy, /etc/alloy/config.alloy]
+    volumes:
+      - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - ${CLUB_BACKEND_LOG_DIR:-./artifacts/empty-logs}:/var/log/club/backend:ro
+      - ${CLUB_NGINX_LOG_DIR:-/var/log/nginx}:/var/log/club/nginx:ro
+      - alloy_data:/var/lib/alloy
+    networks: [monitoring_net]
+    mem_limit: 128m
+    cpus: 0.2
+    security_opt: [no-new-privileges:true]
+  promtail:
+    image: grafana/promtail:3.5.5
+    profiles: [legacy-promtail]
+    restart: unless-stopped
+    command: [-config.file=/etc/promtail/promtail.yml]
+    volumes:
+      - ./monitoring/promtail/promtail.yml:/etc/promtail/promtail.yml:ro
+      - ${CLUB_BACKEND_LOG_DIR:-./artifacts/empty-logs}:/var/log/club/backend:ro
+      - ${CLUB_NGINX_LOG_DIR:-/var/log/nginx}:/var/log/club/nginx:ro
+      - promtail_positions:/positions
+    networks: [monitoring_net]
+    mem_limit: 96m
+    cpus: 0.2
+    security_opt: [no-new-privileges:true]
+volumes:
+  loki_data:
+  alloy_data:
+  promtail_positions:
+networks:
+  monitoring_net:
+    driver: bridge

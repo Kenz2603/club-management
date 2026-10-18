@@ -9,7 +9,9 @@
     "migrate": "node backend/scripts/migrate.js",
     "create-admin": "node backend/scripts/create-admin.js",
     "test:db": "node scripts/test-mysql.js",
-    "test:backup": "node scripts/test-backup.js"
+    "test:backup": "node scripts/test-backup.js",
+    "test:logging": "node scripts/test-logging.js",
+    "test:observability": "node scripts/test-grafana.js"
   },
   "engines": {
     "node": ">=22 <23"

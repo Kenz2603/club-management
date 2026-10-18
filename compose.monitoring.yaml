@@ -1,0 +1,87 @@
+services:
+  backend:
+    networks: [database_net, monitoring_net]
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    restart: unless-stopped
+    command: [--config.file=/etc/prometheus/prometheus.yml, --storage.tsdb.retention.time=7d, --storage.tsdb.retention.size=512MB]
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus:ro
+      - prometheus_data:/prometheus
+    ports: [127.0.0.1:9090:9090]
+    networks: [monitoring_net]
+    mem_limit: 512m
+    cpus: 0.5
+    security_opt: [no-new-privileges:true]
+  grafana:
+    image: grafana/grafana:12.2.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: club_observer
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    secrets: [grafana_admin_password]
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: [127.0.0.1:3001:3000]
+    networks: [monitoring_net]
+    mem_limit: 256m
+    cpus: 0.5
+    security_opt: [no-new-privileges:true]
+  node-exporter:
+    image: prom/node-exporter:v1.9.1
+    restart: unless-stopped
+    command: [--path.rootfs=/host, --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+)($$|/)]
+    pid: host
+    volumes: ["/:/host:ro,rslave"]
+    networks: [monitoring_net]
+    mem_limit: 64m
+    cpus: 0.2
+    security_opt: [no-new-privileges:true]
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.52.1
+    restart: unless-stopped
+    devices: [/dev/kmsg]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    networks: [monitoring_net]
+    mem_limit: 256m
+    cpus: 0.3
+    security_opt: [no-new-privileges:true]
+  mysql-exporter:
+    image: prom/mysqld-exporter:v0.17.2
+    restart: unless-stopped
+    command: [--config.my-cnf=/run/secrets/mysql_exporter]
+    secrets: [mysql_exporter]
+    networks: [database_net, monitoring_net]
+    mem_limit: 64m
+    cpus: 0.2
+    security_opt: [no-new-privileges:true]
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.4.2
+    restart: unless-stopped
+    command: [--nginx.scrape-uri=http://host.docker.internal:8081/nginx_status]
+    extra_hosts: [host.docker.internal:host-gateway]
+    networks: [monitoring_net]
+    mem_limit: 64m
+    cpus: 0.2
+    security_opt: [no-new-privileges:true]
+volumes:
+  prometheus_data:
+  grafana_data:
+networks:
+  monitoring_net:
+    driver: bridge
+secrets:
+  grafana_admin_password:
+    file: ${GRAFANA_ADMIN_PASSWORD_FILE:-./secrets/grafana_admin_password}
+  mysql_exporter:
+    file: ${MYSQL_EXPORTER_CONFIG_FILE:-./secrets/mysql-exporter.cnf}

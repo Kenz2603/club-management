@@ -7,9 +7,11 @@ const usersRouter = require('./routes/users');
 const resourceRouter = require('./routes/resources');
 const resourceService = require('./services/resources.service');
 const { requireAuth } = require('./middleware/auth');
+const { observability, metrics, logger } = require('./middleware/observability');
 const pool = require('./config/database');
 const app = express();
 app.disable('x-powered-by');
+app.use(observability);
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
@@ -18,7 +20,6 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) res.setHeader('Cache-Control', 'no-store');
   next();
 });
-
 
 if (process.env.TRUST_PROXY === 'true' || process.env.TRUST_PROXY === '1') {
   app.set('trust proxy', 'loopback');
@@ -48,10 +49,10 @@ app.use('/api/manage/clubs', resourceRouter('clubs'));
 for (const name of ['members', 'activities', 'meetings', 'contributions']) app.use(`/api/${name}`, resourceRouter(name));
 app.get('/api/catalog', requireAuth, (req, res) => res.json({ success: true, data: require('./domain/resources') }));
 app.get('/api/dashboard', requireAuth, async (req, res) => res.json({ success: true, data: await resourceService.dashboard() }));
-
 app.get('/api/ready', async (req, res, next) => {
   try { await pool.query('SELECT 1'); res.json({ status: 'ok', database: 'ready' }); } catch { res.status(503).json({ status: 'unavailable', database: 'unavailable' }); }
 });
+app.get('/metrics', metrics);
 
 app.use('/api', (req, res) => {
   res.status(404).json({
@@ -71,6 +72,7 @@ app.use((err, req, res, next) => {
     ? 'Đã xảy ra lỗi hệ thống'
     : (err.message || 'Đã xảy ra lỗi hệ thống');
 
+  if (status >= 500) logger('error', 'request_error', { request_id: req.requestId, code: err.code || 'INTERNAL_ERROR' });
   const responseBody = {
     success: false,
     message
