@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      openCreateModalBtn.classList.remove('hidden');
       userGreeting.textContent = `${currentUser.full_name || currentUser.username} (${currentUser.role})`;
       loadUsers();
     } catch {
@@ -97,13 +98,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   logoutBtn.addEventListener('click', async () => {
     try {
-      await fetch('/api/auth/logout', {
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
         headers: {
           'X-CSRF-Token': csrfToken
         }
       });
-    } finally {
+      if (!response.ok) { alert('Đăng xuất thất bại. Vui lòng thử lại.'); return; }
+    } catch { alert('Không thể kết nối máy chủ.'); return; }
+    {
       window.location.href = 'login.html';
     }
   });

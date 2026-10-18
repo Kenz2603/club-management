@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản lý Người dùng - Hệ thống Quản lý Câu lạc bộ</title>
   <link rel="stylesheet" href="css/home.css">
-  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/auth.css"><link rel="stylesheet" href="css/workspace.css">
 </head>
 <body>
   <header class="app-header">
     <div class="container header-container">
       <a href="index.html" class="app-title" style="text-decoration: none;">Quản lý Câu lạc bộ</a>
-      <div class="nav-actions">
+      <div class="nav-actions"><a href="dashboard.html" class="nav-link">Tổng quan</a><a href="profile.html" class="nav-link">Hồ sơ</a>
         <a href="index.html" class="nav-link">Trang chủ</a>
         <a href="users.html" class="nav-link active">Người dùng</a>
         <div class="user-badge">
@@ -46,7 +46,7 @@
             <option value="disabled">Đã vô hiệu hóa (disabled)</option>
           </select>
         </div>
-        <button type="button" id="open-create-modal-btn" class="btn btn-primary">+ Thêm tài khoản</button>
+        <button type="button" id="open-create-modal-btn" class="btn btn-primary hidden">+ Thêm tài khoản</button>
       </div>
 
       <div id="loading-state" class="state-container">
@@ -125,7 +125,7 @@
 
           <div class="form-group">
             <label for="user-modal-fullname" class="form-label">Họ và tên</label>
-            <input type="text" id="user-modal-fullname" class="form-control" autocomplete="off">
+            <input type="text" id="user-modal-fullname" class="form-control" required maxlength="150" autocomplete="off">
           </div>
 
           <div class="form-group" id="user-modal-password-group">
