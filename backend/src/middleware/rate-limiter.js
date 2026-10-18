@@ -4,6 +4,7 @@ const WINDOW_MS = 15 * 60 * 1000;
 const MAX_MAP_SIZE = 10000;
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 
+const activeAttempts = new Map();
 const ipAttempts = new Map();
 const accountAttempts = new Map();
 
@@ -99,6 +100,13 @@ function loginRateLimiter(req, res, next) {
     });
   }
 
+  const inflightKey = `${ip}:${identifier}`;
+  const inflight = activeAttempts.get(inflightKey) || 0;
+  if (inflight >= 3 || [...activeAttempts.values()].reduce((sum, value) => sum + value, 0) >= 50) return res.status(429).json({ success: false, message: 'Có quá nhiều yêu cầu đang xử lý' });
+  if (typeof res.once === 'function') {
+    activeAttempts.set(inflightKey, inflight + 1);
+    res.once('close', () => { const remaining = (activeAttempts.get(inflightKey) || 1) - 1; if (remaining) activeAttempts.set(inflightKey, remaining); else activeAttempts.delete(inflightKey); });
+  }
   next();
 }
 
@@ -120,6 +128,7 @@ function recordSuccessfulLogin(identifier) {
 }
 
 function _resetAllForTesting() {
+  activeAttempts.clear();
   ipAttempts.clear();
   accountAttempts.clear();
 }

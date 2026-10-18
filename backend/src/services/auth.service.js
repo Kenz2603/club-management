@@ -1,3 +1,5 @@
+const transaction = require('../utils/transaction');
+const validation = require('../utils/validation');
 const pool = require('../config/database');
 const {
   generateSessionToken,
@@ -6,11 +8,7 @@ const {
   createCsrfToken,
   calculateSessionExpiry
 } = require('../utils/session');
-const {
-  verifyPassword,
-  dummyVerifyPassword,
-  hashPassword
-} = require('../utils/password');
+const passwordUtils = require('../utils/password');
 const {
   getClientIp,
   normalizeIdentifier,
@@ -22,7 +20,7 @@ async function login(identifier, plainPassword, req) {
   const ip = getClientIp(req);
   const normalized = normalizeIdentifier(identifier);
 
-  if (!normalized || typeof plainPassword !== 'string' || plainPassword.length === 0) {
+  if (!normalized || typeof plainPassword !== 'string' || plainPassword.length === 0 || plainPassword.length > 1024 || normalized.length > 191) {
     recordFailedLogin(ip, normalized);
     const err = new Error('Tên đăng nhập hoặc mật khẩu không chính xác');
     err.statusCode = 401;
@@ -35,15 +33,15 @@ async function login(identifier, plainPassword, req) {
   );
 
   if (rows.length === 0) {
-    await dummyVerifyPassword(plainPassword);
+    await passwordUtils.dummyVerifyPassword(plainPassword);
     recordFailedLogin(ip, normalized);
     const err = new Error('Tên đăng nhập hoặc mật khẩu không chính xác');
     err.statusCode = 401;
     throw err;
   }
 
-  const user = rows[0];
-  const isMatch = await verifyPassword(plainPassword, user.password_hash);
+  const { id: userId, password_hash: passwordHash, status } = rows[0];
+  const isMatch = await passwordUtils.verifyPassword(plainPassword, passwordHash);
 
   if (!isMatch) {
     recordFailedLogin(ip, normalized);
@@ -52,14 +50,12 @@ async function login(identifier, plainPassword, req) {
     throw err;
   }
 
-  if (user.status !== 'active') {
+  if (status !== 'active') {
     recordFailedLogin(ip, normalized);
     const err = new Error('Tên đăng nhập hoặc mật khẩu không chính xác');
     err.statusCode = 401;
     throw err;
   }
-
-  recordSuccessfulLogin(normalized);
 
   const sessionToken = generateSessionToken();
   const tokenHash = hashSessionToken(sessionToken);
@@ -67,28 +63,44 @@ async function login(identifier, plainPassword, req) {
   const expiresAt = calculateSessionExpiry();
   const userAgent = req.headers['user-agent'] ? req.headers['user-agent'].slice(0, 255) : null;
 
-  const [sessionResult] = await pool.query(
-    `INSERT INTO user_sessions (user_id, token_hash, csrf_secret, ip_address, user_agent, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [user.id, tokenHash, csrfSecret, ip, userAgent, expiresAt]
-  );
+  const result = await transaction(async (connection) => {
+    const [currentRows] = await connection.query(
+      'SELECT id, username, email, password_hash, full_name, role, status FROM users WHERE username = ? OR email = ? LIMIT 1 FOR UPDATE',
+      [normalized, normalized]
+    );
+    const user = currentRows[0];
+    if (!user || String(user.id) !== String(userId) || user.status !== 'active' || user.password_hash !== passwordHash) {
+      recordFailedLogin(ip, normalized);
+      const err = new Error('Tên đăng nhập hoặc mật khẩu không chính xác');
+      err.statusCode = 401;
+      throw err;
+    }
 
-  const sessionId = sessionResult.insertId;
-  const csrfToken = createCsrfToken(csrfSecret, sessionId);
+    const [sessionResult] = await connection.query(
+      `INSERT INTO user_sessions (user_id, token_hash, csrf_secret, ip_address, user_agent, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [user.id, tokenHash, csrfSecret, ip, userAgent, expiresAt]
+    );
 
-  await pool.query('UPDATE users SET last_login_at = NOW() WHERE id = ?', [user.id]).catch(() => {});
+    const sessionId = sessionResult.insertId;
+    const csrfToken = createCsrfToken(csrfSecret, sessionId);
 
-  return {
-    user: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      full_name: user.full_name,
-      role: user.role
-    },
-    sessionToken,
-    csrfToken
-  };
+    await connection.query('UPDATE users SET last_login_at = NOW() WHERE id = ?', [user.id]);
+
+    return {
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role
+      },
+      sessionToken,
+      csrfToken
+    };
+  });
+  recordSuccessfulLogin(normalized);
+  return result;
 }
 
 async function logout(sessionId) {
@@ -99,36 +111,21 @@ async function logout(sessionId) {
 }
 
 async function changePassword(userId, currentPassword, newPassword, currentSessionId) {
-  if (typeof newPassword !== 'string' || newPassword.length < 8) {
+  if (typeof newPassword !== 'string' || newPassword.length < 8 || newPassword.length > 1024) {
     const err = new Error('Mật khẩu mới phải có tối thiểu 8 ký tự');
     err.statusCode = 400;
     throw err;
   }
 
-  const [rows] = await pool.query('SELECT password_hash FROM users WHERE id = ? LIMIT 1', [userId]);
-  if (rows.length === 0) {
-    const err = new Error('Không tìm thấy người dùng');
-    err.statusCode = 404;
-    throw err;
-  }
-
-  const isMatch = await verifyPassword(currentPassword, rows[0].password_hash);
-  if (!isMatch) {
-    const err = new Error('Mật khẩu hiện tại không chính xác');
-    err.statusCode = 400;
-    throw err;
-  }
-
-  const hashedNew = await hashPassword(newPassword);
-  await pool.query(
-    'UPDATE users SET password_hash = ?, password_changed_at = NOW() WHERE id = ?',
-    [hashedNew, userId]
-  );
-
-  await pool.query(
-    'UPDATE user_sessions SET revoked_at = NOW() WHERE user_id = ? AND id != ? AND revoked_at IS NULL',
-    [userId, currentSessionId || 0]
-  );
+  validation.password(newPassword);
+  return transaction(async (connection) => {
+    const [rows] = await connection.query('SELECT password_hash FROM users WHERE id = ? LIMIT 1 FOR UPDATE', [userId]);
+    if (!rows.length) validation.fail('Không tìm thấy người dùng', 404);
+    if (!await passwordUtils.verifyPassword(currentPassword, rows[0].password_hash)) validation.fail('Mật khẩu hiện tại không chính xác');
+    const hashedNew = await passwordUtils.hashPassword(newPassword);
+    await connection.query('UPDATE users SET password_hash = ?, password_changed_at = NOW() WHERE id = ?', [hashedNew, userId]);
+    await connection.query('UPDATE user_sessions SET revoked_at = NOW() WHERE user_id = ? AND id != ? AND revoked_at IS NULL', [userId, currentSessionId || 0]);
+  });
 }
 
 async function cleanExpiredSessions() {

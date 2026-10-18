@@ -14,7 +14,7 @@ const DUMMY_SALT = Buffer.alloc(16, 0x42);
 const DUMMY_KEY = Buffer.alloc(64, 0x42);
 
 async function hashPassword(plainPassword) {
-  if (typeof plainPassword !== 'string' || plainPassword.length < 8) {
+  if (typeof plainPassword !== 'string' || plainPassword.length < 8 || plainPassword.length > 1024) {
     throw new Error('Password must be a string with at least 8 characters');
   }
 
@@ -54,6 +54,7 @@ async function verifyPassword(plainPassword, storedHash) {
     return false;
   }
 
+  if (N !== DEFAULT_SCRYPT_OPTIONS.N || r !== 8 || p !== 1 || plainPassword.length > 1024) return false;
   const derivedKey = await scryptAsync(plainPassword, salt, 64, { N, r, p, maxmem: 32 * 1024 * 1024 });
 
   if (derivedKey.length !== expectedKey.length) {
