@@ -167,6 +167,6 @@ MySQL DDL có implicit commit; CREATE TABLE và ghi ledger không atomic. Nếu 
 
 ## Transaction
 
-Login khóa user trong transaction rồi tạo session. Change/reset password khóa user và cập nhật hash/thu hồi session trong cùng transaction. Update role/status khóa active admins trước target, kiểm tra admin cuối, update và revoke cùng commit. Ghi nghiệp vụ khóa record và parent. Deadlock của MySQL có thể trả 500; client thử lại thao tác sau khi kiểm tra trạng thái, không retry mù để tránh tạo bản ghi trùng.
+Login xác minh scrypt ngoài transaction; sau đó khóa và đọc lại user, đối chiếu ID, trạng thái và password hash trước khi tạo session. Change/reset password khóa user và cập nhật hash/thu hồi session trong cùng transaction. Update role/status khóa active admins trước target, kiểm tra admin cuối, update và revoke cùng commit. Ghi nghiệp vụ khóa record và parent. Deadlock và lock timeout của MySQL trả 409; client thử lại thao tác sau khi kiểm tra trạng thái, không retry mù để tránh tạo bản ghi trùng.
 
 PENDING_UBUNTU_EVIDENCE: đối chiếu full schema, timezone, collation và ledger thật; không giả định database Ubuntu trống.

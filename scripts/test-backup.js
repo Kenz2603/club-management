@@ -83,4 +83,4 @@ async function main() {
   }
 }
 
-main().catch(() => { console.error('Isolated backup/restore verification FAILED'); process.exitCode = 1; });
+main().catch(error => { console.error('Isolated backup/restore verification FAILED: ' + error.message); process.exitCode = 1; });

@@ -10,9 +10,13 @@ Không chạy DDL đồng thời với single-transaction dump. Xem xét quyền
 
 ## Restore drill
 
-Tạo container riêng tên club-management-restore-<mã>, database rỗng, volume riêng. Đặt RESTORE_CONTAINER, BACKUP_FILE, CONFIRM_RESTORE=<đúng tên container> rồi `bash scripts/restore-test.sh`. Script kiểm tra checksum và chỉ cho phép target prefix restore. Không tự tạo/xóa volume, không chấp nhận tên production.
+Tạo container riêng tên club-management-restore-<mã>, database rỗng, volume hoặc tmpfs riêng, bắt buộc có label `club-management.restore-test=true`. Đặt RESTORE_CONTAINER, BACKUP_FILE, CONFIRM_RESTORE=<đúng tên container> rồi `bash scripts/restore-test.sh`. Script kiểm tra checksum và chỉ cho phép target prefix restore. Không tự tạo/xóa volume, không chấp nhận tên production, target thiếu label hoặc database đã có bảng.
 
 Sau restore: verify --all, đối chiếu row count/tổng đóng góp, FK/CHECK/index, đăng nhập bằng tài khoản test được quản trị viên cho phép, kiểm tra không dùng session production. Chỉ kết luận restore thành công khi nội dung được kiểm chứng, không chỉ vì mysql exit 0. Runbook phục hồi production phải có downtime, backup trước thay đổi, quyền truy cập và rollback riêng do quản trị viên duyệt.
+
+## Bằng chứng cách ly trên Windows
+
+`npm run test:backup` tạo hai MySQL 8.4 với tmpfs và cổng localhost ngẫu nhiên, áp dụng 001–007 trên nguồn, dump và restore sang target rỗng. Script đối chiếu full schema, 7 ledger entries và tên CLB fixture; kiểm tra từ chối confirmation sai, dump sai checksum và target không rỗng. Mật khẩu sinh trong bộ nhớ, không đọc `.env`. Chỉ dọn container do lượt chạy tạo và có nhãn disposable; dump test nằm trong artifacts bị Git ignore. Đây không phải minh chứng backup dữ liệu Ubuntu.
 
 ## Lịch và retention đề xuất
 

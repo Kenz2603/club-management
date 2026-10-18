@@ -52,6 +52,6 @@ Ba truy vấn đầu lần lượt tìm lỗi, HTTP 4xx/5xx và đếm 5xx theo 
 
 Nếu buộc dùng Promtail cho lab: người vận hành phải dừng service alloy của đúng project trước, rồi chỉ up service promtail/loki bằng --profile legacy-promtail. Không chạy lệnh up toàn bộ profile khi Alloy đang chạy vì sẽ gửi log trùng. Đây là thao tác triển khai cần người vận hành quyết định, chưa được Codex thực hiện.
 
-## Runtime c?ch ly ?? ki?m ch?ng tr?n Windows
+## Runtime cách ly đã kiểm chứng trên Windows
 
-`node scripts/test-grafana.js`: Grafana health, provisioning hai datasource UID v? dashboard 12 panel. `node scripts/test-logging.js`: t?o application log b?ng logger th?t, bao Docker JSON log, cho Alloy ??c file v? g?i v?o Loki t?m. Ba truy v?n x?c nh?n l?i backend, HTTP 404/500 v? Nginx error ?? ???c thay n?i dung nh?y c?m; fixture b? m?t kh?ng xu?t hi?n trong k?t qu?. Container/network ri?ng, tmpfs v? c?ng localhost ng?u nhi?n; kh?ng mount Docker socket ho?c log production. C?c k?t qu? n?y kh?ng ch?ng minh exporter ho?c collector Ubuntu ?? ho?t ??ng.
+`npm run test:observability`: Grafana health, provisioning hai datasource UID và dashboard 12 panel. `npm run test:logging`: tạo application log bằng logger thật, bao Docker JSON log, cho Alloy đọc file và gửi vào Loki tạm. Ba truy vấn xác nhận lỗi backend, HTTP 404/500 và Nginx error đã được thay nội dung nhạy cảm; fixture bí mật không xuất hiện trong kết quả. Container/network riêng, tmpfs và cổng localhost ngẫu nhiên; không mount Docker socket hoặc log production. Các kết quả này không chứng minh exporter hoặc collector Ubuntu đã hoạt động.
