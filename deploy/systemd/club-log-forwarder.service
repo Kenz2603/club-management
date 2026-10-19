@@ -1,0 +1,22 @@
+[Unit]
+Description=Club Management Backend Log Forwarder
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+User=root
+Group=adm
+UMask=0027
+ExecStart=/usr/bin/python3 /usr/local/lib/club-management/club-log-forwarder.py
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/club/backend /var/lib/club-log-forwarder
+MemoryMax=64M
+CPUQuota=20%
+
+[Install]
+WantedBy=multi-user.target
