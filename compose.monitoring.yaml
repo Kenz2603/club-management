@@ -59,7 +59,7 @@ services:
     cpus: 0.2
     security_opt: [no-new-privileges:true]
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.52.1
+    image: ghcr.io/google/cadvisor:v0.60.6
     restart: unless-stopped
     devices: [/dev/kmsg]
     volumes:
