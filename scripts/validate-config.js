@@ -20,7 +20,7 @@ try{
  fs.writeFileSync('artifacts/nginx-test.conf','events {} http { include /etc/nginx/club/club-logging.conf; include /etc/nginx/club/club-management.conf; include /etc/nginx/validation/club-status-test.conf; }');
  const mounts=['-v',root+'/nginx:/etc/nginx/club:ro','-v',root+'/artifacts:/etc/nginx/validation:ro','-v',root+'/artifacts/nginx-test.conf:/etc/nginx/nginx.conf:ro'];
  run('Nginx HTTP and status adapted to loopback',['run','--rm','--entrypoint','nginx',...mounts,'nginx:1.28-alpine','-t']);
- const openssl=process.env.OPENSSL_BIN || 'C:/Program Files/Git/usr/bin/openssl.exe';
+ const openssl=process.env.OPENSSL_BIN || (process.platform === 'win32' ? 'C:/Program Files/Git/usr/bin/openssl.exe' : 'openssl');
  run('Temporary TLS certificate',['req','-x509','-nodes','-newkey','rsa:2048','-days','1','-keyout',root+'/artifacts/club.local.key','-out',root+'/artifacts/club.local.crt','-subj','/CN=club.local','-addext','subjectAltName=DNS:club.local'],openssl);
  fs.writeFileSync('artifacts/club-https-test.conf',fs.readFileSync('nginx/club-management.https.conf.example','utf8').replaceAll('/etc/nginx/club-tls/','/etc/nginx/validation/'));
  fs.writeFileSync('artifacts/nginx-tls-test.conf','events {} http { include /etc/nginx/club/club-logging.conf; include /etc/nginx/validation/club-https-test.conf; }');
