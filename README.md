@@ -1,10 +1,10 @@
 # Club Management
 
-Hệ thống quản lý câu lạc bộ bằng Node.js 22, Express, MySQL 8.4 và HTML/CSS/JavaScript. Không có đăng ký công khai; Admin tạo tài khoản.
+Hệ thống quản lý câu lạc bộ bằng Node.js 22, Express, MySQL 8.4 và HTML/CSS/JavaScript. Người dùng có thể tự đăng ký tài khoản Viewer; Admin quản lý tài khoản và cấp quyền theo nghiệp vụ.
 
 ## Chức năng
 
-- Đăng nhập, đăng xuất, session cookie, CSRF, đổi mật khẩu, thu hồi phiên.
+- Đăng ký Viewer, đăng nhập, đăng xuất, session cookie, CSRF, đổi mật khẩu, thu hồi phiên.
 - Admin quản lý tài khoản và quyền; Manager ghi nghiệp vụ; Viewer đọc nghiệp vụ.
 - CLB, thành viên, hoạt động, lịch họp, đóng góp: danh sách, chi tiết, tạo, sửa, lọc, phân trang và ngừng/hủy giữ lịch sử.
 - Dashboard lấy số liệu thật; hồ sơ và giao diện tiếng Việt responsive.
@@ -44,6 +44,7 @@ Password Admin nhập tại prompt ẩn; không truyền `--password`. `npm star
 npm test
 npm run test:syntax
 npx playwright install chromium
+npm run test:ui
 npm run test:db
 npm audit
 npm run test:config
@@ -54,6 +55,8 @@ node scripts/check-secrets.js --history-base=293cf25
 ```
 
 `npm test` khóa kết nối DB thật trong process con. `test:db` tạo container tên ngẫu nhiên `club-management-test-*`, database test, mật khẩu ngẫu nhiên và tmpfs, chạy migration/API/browser rồi chỉ xóa container có đúng tên và nhãn disposable. Không dùng `.env`, database/volume production. Cần đủ RAM/disk Docker. Xem [kết quả thực](docs/TEST_RESULTS.md).
+
+`test:ui` dùng frontend thật và API mock để kiểm tra ba vai trò, responsive, Dark Mode, modal và chọn tên CLB/thành viên; không truy cập database. Danh sách chọn vẫn gửi ID nội bộ cho API. Ảnh và kết quả chạy nằm trong artifacts đã được Git ignore.
 
 ## Triển khai Ubuntu
 
@@ -78,6 +81,8 @@ API cũ `/api/health`, `/api/clubs`, `/api/auth/*`, `/api/users/*` giữ URL và
 ## Dựng lại báo cáo
 
 PDF đã được cung cấp trong output/pdf. Nếu muốn dựng lại trên Windows: cài Python reportlab, pymupdf và pypdf, chạy `npm run report`. Renderer dùng Arial Windows hoặc DejaVu trên Linux. Ảnh minh chứng là ảnh test thật ở artifacts, không phải Ubuntu. `test:config` dùng OpenSSL Git for Windows hoặc biến OPENSSL_BIN cho binary hệ thống; chỉ tạo certificate tạm trong artifacts.
+
+Bản PDF/báo cáo hiện có là mốc 19/10/2026, trước nâng cấp giao diện và đăng ký Viewer. Dùng README, API, USER_GUIDE và TEST_RESULTS để đối chiếu mã nguồn hiện tại; không coi bản thảo cũ là kết quả nghiệm thu mới.
 
 ## CI chuẩn bị sẵn
 

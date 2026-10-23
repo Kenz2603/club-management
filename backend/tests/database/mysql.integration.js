@@ -12,6 +12,90 @@ async function request(path,method='GET',body,auth){const response=await fetch(b
 async function login(username){const result=await request('/api/auth/login','POST',{username,password});assert.equal(result.status,200);return{cookie:result.cookie.split(';')[0],csrf:result.body.data.csrfToken};}
 test.before(async()=>{for(const role of ['admin','manager','viewer'])await pool.query('INSERT INTO users (username,email,password_hash,full_name,role) VALUES (?,?,?,?,?)',[role,role+'@example.test',await hashPassword(password),role,role]);server=http.createServer(app);await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));base=`http://127.0.0.1:${server.address().port}`;admin=await login('admin');manager=await login('manager');viewer=await login('viewer');});
 test.after(async()=>{await new Promise(resolve=>server.close(resolve));await pool.end();});
+
+test('real MySQL: public signup hashes password, creates only viewer and supports login without membership', async () => {
+  const username = 'signup_' + randomBytes(6).toString('hex');
+  const input = { username, email: username + '@example.test', full_name: 'Đăng ký kiểm thử', password, confirm_password: password };
+  const [before] = await pool.query('SELECT COUNT(*) AS total FROM members');
+  const result = await request('/api/auth/register', 'POST', input);
+  assert.equal(result.status, 201);
+  assert.equal(result.cookie, null);
+  assert.equal(result.body.data.user.role, 'viewer');
+  assert.equal(JSON.stringify(result.body).includes('password'), false);
+  const [rows] = await pool.query('SELECT password_hash, role, status FROM users WHERE username = ?', [username]);
+  assert.equal(await require('../../src/utils/password').verifyPassword(password, rows[0].password_hash), true);
+  assert.equal(rows[0].role, 'viewer');
+  assert.equal(rows[0].status, 'active');
+  const [sessions] = await pool.query('SELECT id FROM user_sessions WHERE user_id = ?', [result.body.data.user.id]);
+  assert.equal(sessions.length, 0);
+  const auth = await login(username);
+  assert.equal((await request('/api/users', 'GET', undefined, auth)).status, 403);
+  assert.equal((await request('/api/clubs', 'POST', { name: 'Forbidden' }, auth)).status, 403);
+  assert.equal((await request('/api/auth/register', 'POST', { ...input, role: 'admin' })).status, 400);
+  assert.equal((await request('/api/auth/register', 'POST', { ...input, email: 'different@example.test' })).status, 409);
+  assert.equal((await request('/api/auth/register', 'POST', { ...input, username: 'another_signup' })).status, 409);
+  const [after] = await pool.query('SELECT COUNT(*) AS total FROM members');
+  assert.equal(after[0].total, before[0].total);
+});
+
+test('real MySQL: simultaneous signup conflicts preserve unique account', async () => {
+  const username = 'race_' + randomBytes(6).toString('hex');
+  const input = { username, email: username + '@example.test', full_name: 'Concurrent signup', password, confirm_password: password };
+  const results = await Promise.all([request('/api/auth/register', 'POST', input), request('/api/auth/register', 'POST', input)]);
+  assert.deepEqual(results.map(result => result.status).sort(), [201, 409]);
+  const [rows] = await pool.query('SELECT id FROM users WHERE username = ? OR email = ?', [username, input.email]);
+  assert.equal(rows.length, 1);
+});
+
+test('real browser: signup inline errors, password visibility, responsive registration and viewer login', async () => {
+  const { chromium } = require('@playwright/test');
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1050 } });
+    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    await page.goto(base + '/login.html');
+    await page.getByRole('link', { name: 'Tạo tài khoản', exact: true }).click();
+    await page.locator('#register-submit').click();
+    await page.locator('#error-full_name').filter({ hasText: 'Nhập họ và tên' }).waitFor();
+    assert.equal(await page.locator('#full_name').getAttribute('aria-invalid'), 'true');
+    const username = 'browser_signup_' + randomBytes(5).toString('hex');
+    await page.locator('#full_name').fill('Người đăng ký trình duyệt');
+    await page.locator('#email').fill(username + '@example.test');
+    await page.locator('#username').fill(username);
+    await page.locator('#password').fill(password);
+    await page.locator('#confirm_password').fill('wrong');
+    await page.locator('#register-submit').click();
+    await page.locator('#error-confirm_password').filter({ hasText: 'không khớp' }).waitFor();
+    await page.locator('[data-password="password"]').click();
+    assert.equal(await page.locator('#password').getAttribute('type'), 'text');
+    await page.locator('[data-password="password"]').click();
+    assert.equal(await page.locator('#password').getAttribute('type'), 'password');
+    await page.locator('#password').fill('');
+    await page.locator('#confirm_password').fill('');
+    for (const width of [1440, 768, 390]) {
+      await page.setViewportSize({ width, height: 1050 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      await page.screenshot({ path: `artifacts/register-${width}.png`, fullPage: true });
+    }
+    await page.locator('#theme-toggle').click();
+    await page.screenshot({ path: 'artifacts/register-dark-mobile.png', fullPage: true });
+    await page.locator('#password').fill(password);
+    await page.locator('#confirm_password').fill(password);
+    await page.locator('#register-submit').click();
+    await page.locator('#register-success').filter({ hasText: 'Đăng ký thành công' }).waitFor();
+    await page.waitForURL('**/login.html?registered=1');
+    await page.locator('#registration-notice').waitFor({ state: 'visible' });
+    await page.locator('#username').fill(username);
+    await page.locator('#password').fill(password);
+    await page.locator('#submit-btn').click();
+    await page.waitForURL('**/index.html');
+    await page.goto(base + '/clubs.html');
+    await page.locator('#identity-role').filter({ hasText: 'Người xem' }).waitFor({ state: 'attached' });
+    assert.equal(await page.locator('#create').isVisible(), false);
+    assert.equal(await page.locator('#navigation a[href="users.html"]').count(), 0);
+    assert.deepEqual(errors, []);
+  } finally { await browser.close(); }
+});
 test('real MySQL: health and legacy contract',async()=>{assert.equal((await request('/api/health')).status,200);const result=await request('/api/clubs');assert.equal(result.status,200);assert.equal(result.body.pagination,undefined);});
 test('real MySQL: create relational business records',async()=>{
  let result=await request('/api/clubs','POST',{name:'CLB kiểm thử'},manager);assert.equal(result.status,201);club=result.body.data;
@@ -42,6 +126,55 @@ test('real browser: viewer permissions and admin user management',async()=>{
   await page.locator('#username').fill('admin');await page.locator('#password').fill(password);await page.locator('#submit-btn').click();await page.waitForURL('**/users.html');await page.locator('#open-create-modal-btn').click();await page.locator('#user-modal-username').fill('browser_user');await page.locator('#user-modal-email').fill('browser@example.test');await page.locator('#user-modal-fullname').fill('Tài khoản trình duyệt');await page.locator('#user-modal-password').fill(randomBytes(16).toString('hex'));await page.locator('#save-user-btn').click();await page.getByRole('cell',{name:'browser_user',exact:true}).waitFor();await page.locator('#search-input').fill('browser_user');await page.getByRole('cell',{name:'browser_user',exact:true}).waitFor();
  }finally{await browser.close();}
 });
+test('real browser: select club/member names while preserving foreign keys and edit selection', async () => {
+  const { chromium } = require('@playwright/test');
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    await page.goto(base + '/login.html');
+    await page.locator('#username').fill('manager'); await page.locator('#password').fill(password);
+    await page.locator('#submit-btn').click(); await page.waitForURL('**/index.html');
+    await page.goto(base + '/members.html');
+    await page.locator('#create').click();
+    assert.equal(await page.locator('#field-club_id').evaluate(node => node.tagName), 'SELECT');
+    await page.locator('#field-club_id').selectOption(String(club.id));
+    assert.match(await page.locator('#field-club_id option:checked').textContent(), /CLB kiểm thử/);
+    await page.locator('#field-full_name').fill('Thành viên chọn theo tên');
+    await page.locator('#field-email').fill('name-selector@example.test');
+    await page.screenshot({ path: 'artifacts/reference-member-form.png', fullPage: true });
+    const createdResponse = page.waitForResponse(response => response.url() === base + '/api/members' && response.request().method() === 'POST');
+    await page.locator('#save').click();
+    const created = await createdResponse;
+    assert.equal(created.status(), 201);
+    assert.equal(created.request().postDataJSON().club_id, String(club.id));
+    const selectedMember = (await created.json()).data;
+    const row = page.getByRole('row').filter({ hasText: 'name-selector@example.test' });
+    await row.getByRole('button', { name: 'Sửa', exact: true }).click();
+    assert.equal(await page.locator('#field-club_id').inputValue(), String(club.id));
+    await page.locator('#cancel-editor').click();
+    const filter = page.getByRole('combobox', { name: 'Lọc theo câu lạc bộ', exact: true });
+    const filtered = page.waitForResponse(response => response.url().includes('/api/members?') && new URL(response.url()).searchParams.get('club_id') === String(club.id));
+    await filter.selectOption(String(club.id)); await filtered;
+    for (const screen of ['activities', 'meetings']) {
+      await page.goto(base + '/' + screen + '.html'); await page.locator('#create').click();
+      await page.locator('#field-club_id').selectOption(String(club.id));
+      assert.match(await page.locator('#field-club_id option:checked').textContent(), /CLB kiểm thử/);
+      await page.locator('#cancel-editor').click();
+    }
+    await page.goto(base + '/contributions.html'); await page.locator('#create').click();
+    await page.locator('#field-member_id').selectOption(String(selectedMember.id));
+    assert.match(await page.locator('#field-member_id option:checked').textContent(), /Thành viên chọn theo tên.*name-selector@example.test.*CLB kiểm thử/);
+    await page.locator('#field-amount').fill('25.00');
+    await page.locator('#field-contribution_date').fill('2026-10-23');
+    await page.screenshot({ path: 'artifacts/reference-contribution-form.png', fullPage: true });
+    const saved = page.waitForResponse(response => response.url() === base + '/api/contributions' && response.request().method() === 'POST');
+    await page.locator('#save').click();
+    const response = await saved; assert.equal(response.status(), 201);
+    assert.equal(response.request().postDataJSON().member_id, String(selectedMember.id));
+    await page.getByRole('cell').filter({ hasText: 'Thành viên chọn theo tên' }).waitFor();
+  } finally { await browser.close(); }
+});
+
 test('real MySQL: soft deletion retains history and adjusts totals',async()=>{assert.equal((await request('/api/contributions/'+contribution.id,'DELETE',undefined,manager)).body.data.status,'cancelled');const[rows]=await pool.query('SELECT id FROM contributions WHERE id=?',[contribution.id]);assert.equal(rows.length,1);assert.equal((await request('/api/dashboard','GET',undefined,viewer)).body.data.confirmed_contributions,'0.00');});
 test('real MySQL: password transaction revokes other sessions only',async()=>{const other=await login('viewer');const next=randomBytes(16).toString('hex');assert.equal((await request('/api/auth/password','PUT',{current_password:password,new_password:next},viewer)).status,200);assert.equal((await request('/api/auth/me','GET',undefined,other)).status,401);assert.equal((await request('/api/auth/me','GET',undefined,viewer)).status,200);});
 test('real MySQL: last admin cannot demote self',async()=>{const[rows]=await pool.query("SELECT id FROM users WHERE username='admin'");assert.equal((await request('/api/users/'+rows[0].id,'PUT',{role:'viewer'},admin)).status,409);});

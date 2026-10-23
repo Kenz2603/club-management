@@ -2,27 +2,55 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản lý Người dùng - Hệ thống Quản lý Câu lạc bộ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Tài khoản · Club Management</title>
+  <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/home.css">
-  <link rel="stylesheet" href="css/auth.css"><link rel="stylesheet" href="css/workspace.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/workspace.css">
+  <link rel="stylesheet" href="css/design.css">
 </head>
-<body>
-  <header class="app-header">
-    <div class="container header-container">
-      <a href="index.html" class="app-title" style="text-decoration: none;">Quản lý Câu lạc bộ</a>
-      <div class="nav-actions"><a href="dashboard.html" class="nav-link">Tổng quan</a><a href="profile.html" class="nav-link">Hồ sơ</a>
-        <a href="index.html" class="nav-link">Trang chủ</a>
-        <a href="users.html" class="nav-link active">Người dùng</a>
-        <div class="user-badge">
-          <span id="user-greeting" class="user-name"></span>
-          <button type="button" id="logout-btn" class="btn btn-outline btn-sm">Đăng xuất</button>
-        </div>
+<body data-page="users">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Điều hướng chính">
+      <div class="sidebar-brand">
+        <a href="dashboard.html" class="brand"><span class="brand-mark" data-icon="layers"></span>Club Management</a>
       </div>
-    </div>
-  </header>
+      <nav id="navigation" class="sidebar-nav" aria-label="Menu"></nav>
+      <div class="sidebar-foot">
+        <a href="index.html" data-icon="home">Trang công khai</a>
+      </div>
+    </aside>
+    <div class="sidebar-scrim" id="sidebar-scrim"></div>
+    <div class="app-main">
+      <header class="topbar">
+        <button type="button" id="menu-toggle" class="icon-btn menu-toggle" aria-label="Mở menu điều hướng" aria-controls="sidebar" aria-expanded="false" data-icon="menu"></button>
+        <nav class="breadcrumb" aria-label="Đường dẫn">
+          <a class="crumb-home" href="dashboard.html">Trang chủ</a>
+          <span class="crumb-home" data-icon="chevronRight"></span>
+          <span id="crumb" aria-current="page">Tài khoản</span>
+        </nav>
+        <div class="topbar-actions">
+          <button type="button" id="theme-toggle" class="icon-btn" aria-label="Đổi giao diện sáng/tối"></button>
+          <div class="user-chip" id="identity">
+            <span class="avatar" id="avatar" aria-hidden="true"></span>
+            <div class="user-meta"><strong id="identity-name">…</strong><span id="identity-role"></span></div>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" id="logout-btn" aria-label="Đăng xuất" data-icon="logout"><span class="label">Đăng xuất</span></button>
+        </div>
+      </header>
+      <main class="page" id="main">
+        <div class="page-header">
+          <div>
+            <h1>Tài khoản</h1>
+            <p id="subtitle" class="section-subtitle">Quản lý tài khoản, vai trò và quyền truy cập</p>
+          </div>
+          <button type="button" id="create" class="btn btn-primary hidden" data-icon="plus">Thêm mới</button>
+        </div>
+        <span id="user-greeting" class="hidden"></span>
+        <p id="notice" role="status" aria-live="polite"></p>
 
-  <main class="container main-content">
     <section class="section-card">
       <div class="section-header">
         <div>
@@ -33,14 +61,14 @@
 
       <div class="table-toolbar">
         <div class="toolbar-filters">
-          <input type="text" id="search-input" class="form-control search-input" placeholder="Tìm tên, email, họ tên...">
-          <select id="filter-role" class="form-control filter-select">
+          <input aria-label="Tìm kiếm tài khoản" type="text" id="search-input" class="form-control search-input" placeholder="Tìm tên, email, họ tên...">
+          <select aria-label="Lọc vai trò" id="filter-role" class="form-control filter-select">
             <option value="">Tất cả vai trò</option>
             <option value="admin">Quản trị viên (admin)</option>
             <option value="manager">Quản lý (manager)</option>
             <option value="viewer">Người xem (viewer)</option>
           </select>
-          <select id="filter-status" class="form-control filter-select">
+          <select aria-label="Lọc trạng thái" id="filter-status" class="form-control filter-select">
             <option value="">Tất cả trạng thái</option>
             <option value="active">Đang hoạt động (active)</option>
             <option value="disabled">Đã vô hiệu hóa (disabled)</option>
@@ -88,7 +116,7 @@
           <button type="button" id="prev-page-btn" class="btn btn-outline btn-sm">Trước</button>
           <span id="page-current-indicator"></span>
           <button type="button" id="next-page-btn" class="btn btn-outline btn-sm">Sau</button>
-          <select id="limit-select" class="form-control filter-select" style="min-width: 90px; padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+          <select aria-label="Số dòng mỗi trang" id="limit-select" class="form-control filter-select" style="min-width: 90px; padding: 0.25rem 0.5rem; font-size: 0.75rem;">
             <option value="10">10 dòng</option>
             <option value="20">20 dòng</option>
             <option value="50">50 dòng</option>
@@ -96,13 +124,16 @@
         </div>
       </div>
     </section>
-  </main>
 
-  <div id="user-modal" class="modal-backdrop hidden">
+      </main>
+      <footer class="app-footer">Club Management · Dữ liệu nội bộ</footer>
+    </div>
+  </div>
+  <div id="user-modal" aria-labelledby="user-modal-title" class="modal-backdrop hidden" role="dialog" aria-modal="true">
     <div class="modal-content">
       <div class="modal-header">
         <h3 id="user-modal-title" class="modal-title">Thêm tài khoản mới</h3>
-        <button type="button" id="close-user-modal" class="modal-close">&times;</button>
+        <button type="button" id="close-user-modal" class="modal-close" aria-label="Đóng hộp thoại">&times;</button>
       </div>
       <form id="user-form">
         <div class="modal-body">
@@ -151,11 +182,11 @@
     </div>
   </div>
 
-  <div id="reset-modal" class="modal-backdrop hidden">
+  <div id="reset-modal" aria-labelledby="reset-modal-title" class="modal-backdrop hidden" role="dialog" aria-modal="true">
     <div class="modal-content">
       <div class="modal-header">
         <h3 id="reset-modal-title" class="modal-title">Đặt lại mật khẩu</h3>
-        <button type="button" id="close-reset-modal" class="modal-close">&times;</button>
+        <button type="button" id="close-reset-modal" class="modal-close" aria-label="Đóng hộp thoại">&times;</button>
       </div>
       <form id="reset-form">
         <div class="modal-body">
@@ -184,14 +215,10 @@
     </div>
   </div>
 
-  <div id="toast-container" class="toast-container"></div>
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-  <footer class="app-footer">
-    <div class="container footer-container">
-      <p>Hệ thống Quản lý Câu lạc bộ &copy; 2026</p>
-    </div>
-  </footer>
 
+  <script src="js/shell.js"></script>
   <script src="js/users.js"></script>
 </body>
 </html>

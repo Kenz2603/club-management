@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const data = await response.json();
       healthBadge.className = 'health-badge health-ok';
-      healthText.textContent = data.message || 'Hệ thống hoạt động';
+      healthText.textContent = data.status === 'ok' ? 'Hệ thống hoạt động' : 'Đã kết nối';
     } catch {
       healthBadge.className = 'health-badge health-error';
       healthText.textContent = 'Mất kết nối hệ thống';
