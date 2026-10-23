@@ -10,6 +10,7 @@
     "create-admin": "node backend/scripts/create-admin.js",
     "test:db": "node scripts/test-mysql.js",
     "test:syntax": "node scripts/check-source.js",
+    "test:ui": "node scripts/test-ui.js",
     "test:config": "node scripts/validate-config.js",
     "report": "python scripts/render-report.py",
     "test:observability": "node scripts/test-grafana.js",

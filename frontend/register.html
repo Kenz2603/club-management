@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="js/theme.js"></script>
+  <title>Tạo tài khoản · Club Management</title>
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/design.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="container header-container">
+      <a href="index.html" class="app-title" style="text-decoration:none">Quản lý Câu lạc bộ</a>
+      <div class="nav-actions">
+        <button type="button" id="theme-toggle" class="icon-btn" aria-label="Đổi giao diện sáng/tối"></button>
+        <a href="login.html" class="nav-link">Đăng nhập</a>
+      </div>
+    </div>
+  </header>
+  <main class="container main-content login-layout">
+    <aside class="login-story">
+      <span class="brand-mark" data-icon="layers"></span>
+      <h1>Bắt đầu kết nối.<br>Cùng nhau phát triển.</h1>
+      <p>Tạo tài khoản để truy cập không gian Club Management với vai trò người xem.</p>
+      <p class="story-note">Đăng ký tài khoản không tự động thêm bạn vào một câu lạc bộ hoặc cấp quyền quản trị.</p>
+    </aside>
+    <div class="login-wrapper register-wrapper">
+      <div class="login-card">
+        <div class="login-header">
+          <h2 class="login-title">Tạo tài khoản</h2>
+          <p class="login-desc">Nhập thông tin của bạn để bắt đầu</p>
+        </div>
+        <div id="register-alert" class="alert alert-danger hidden" role="alert"></div>
+        <div id="register-success" class="alert alert-success hidden" role="status"></div>
+        <form id="register-form" novalidate>
+          <div class="form-group">
+            <label for="full_name" class="form-label">Họ và tên</label>
+            <input id="full_name" name="full_name" class="form-control" autocomplete="name" maxlength="150" required aria-describedby="error-full_name">
+            <p id="error-full_name" class="field-error" aria-live="polite"></p>
+          </div>
+          <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input id="email" name="email" class="form-control" type="email" autocomplete="email" maxlength="191" required aria-describedby="error-email">
+            <p id="error-email" class="field-error" aria-live="polite"></p>
+          </div>
+          <div class="form-group">
+            <label for="username" class="form-label">Tên đăng nhập</label>
+            <input id="username" name="username" class="form-control" autocomplete="username" minlength="3" maxlength="50" required aria-describedby="username-help error-username">
+            <small id="username-help" class="form-text">3–50 chữ cái không dấu, số, gạch dưới hoặc gạch ngang.</small>
+            <p id="error-username" class="field-error" aria-live="polite"></p>
+          </div>
+          <div class="form-group">
+            <label for="password" class="form-label">Mật khẩu</label>
+            <div class="password-field">
+              <input id="password" name="password" class="form-control" type="password" autocomplete="new-password" minlength="8" maxlength="1024" required aria-describedby="password-help error-password">
+              <button type="button" class="password-toggle" data-password="password" aria-controls="password" aria-pressed="false" aria-label="Hiển thị mật khẩu">Hiện</button>
+            </div>
+            <small id="password-help" class="form-text">Từ 8 đến 1024 ký tự.</small>
+            <p id="error-password" class="field-error" aria-live="polite"></p>
+          </div>
+          <div class="form-group">
+            <label for="confirm_password" class="form-label">Xác nhận mật khẩu</label>
+            <div class="password-field">
+              <input id="confirm_password" name="confirm_password" class="form-control" type="password" autocomplete="new-password" minlength="8" maxlength="1024" required aria-describedby="error-confirm_password">
+              <button type="button" class="password-toggle" data-password="confirm_password" aria-controls="confirm_password" aria-pressed="false" aria-label="Hiển thị mật khẩu xác nhận">Hiện</button>
+            </div>
+            <p id="error-confirm_password" class="field-error" aria-live="polite"></p>
+          </div>
+          <button type="submit" id="register-submit" class="btn btn-primary btn-block">Tạo tài khoản</button>
+        </form>
+        <p class="login-footnote">Đã có tài khoản? <a href="login.html">Đăng nhập</a></p>
+      </div>
+    </div>
+  </main>
+  <footer class="app-footer">Club Management · Không gian dành cho cộng đồng</footer>
+  <script src="js/shell.js"></script>
+  <script src="js/register.js"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentPage = 1;
   let currentLimit = 10;
   let searchTimeout = null;
+  let modalTrigger = null;
 
   const userGreeting = document.getElementById('user-greeting');
   const logoutBtn = document.getElementById('logout-btn');
@@ -90,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       openCreateModalBtn.classList.remove('hidden');
       userGreeting.textContent = `${currentUser.full_name || currentUser.username} (${currentUser.role})`;
+      window.ClubUI.mount(currentUser, 'users');
       loadUsers();
     } catch {
       window.location.href = 'login.html';
@@ -183,13 +185,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const tdRole = document.createElement('td');
       const roleBadge = document.createElement('span');
       roleBadge.className = `badge badge-${user.role}`;
-      roleBadge.textContent = user.role;
+      roleBadge.textContent = { admin: 'Quản trị viên', manager: 'Quản lý', viewer: 'Người xem' }[user.role] || user.role;
       tdRole.appendChild(roleBadge);
 
       const tdStatus = document.createElement('td');
       const statusBadge = document.createElement('span');
       statusBadge.className = user.status === 'active' ? 'badge badge-active' : 'badge badge-disabled';
-      statusBadge.textContent = user.status;
+      statusBadge.textContent = user.status === 'active' ? 'Hoạt động' : user.status === 'disabled' ? 'Đã vô hiệu hóa' : user.status;
       tdStatus.appendChild(statusBadge);
 
       const tdCreatedAt = document.createElement('td');
@@ -244,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function openCreateModal() {
+    modalTrigger = document.activeElement;
     userModalTitle.textContent = 'Thêm tài khoản mới';
     userModalId.value = '';
     userModalUsername.value = '';
@@ -261,6 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function openEditModal(user) {
+    modalTrigger = document.activeElement;
     userModalTitle.textContent = `Cập nhật tài khoản #${user.id} (${user.username})`;
     userModalId.value = String(user.id);
     userModalUsername.value = user.username;
@@ -279,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function closeUserModalFunc() {
     userModal.classList.add('hidden');
+    modalTrigger?.focus();
   }
 
   closeUserModal.addEventListener('click', closeUserModalFunc);
@@ -386,6 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function openResetModal(user) {
+    modalTrigger = document.activeElement;
     resetModalTitle.textContent = `Đặt lại mật khẩu: ${user.username}`;
     resetUserId.value = String(user.id);
     resetNewPassword.value = '';
@@ -398,6 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function closeResetModalFunc() {
     resetModal.classList.add('hidden');
+    modalTrigger?.focus();
   }
 
   closeResetModal.addEventListener('click', closeResetModalFunc);
@@ -489,6 +496,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   retryBtn.addEventListener('click', loadUsers);
+
+  document.addEventListener('keydown', event => {
+    const modal = [userModal, resetModal].find(node => !node.classList.contains('hidden'));
+    if (!modal) return;
+    if (event.key === 'Escape') {
+      if (modal === userModal) closeUserModalFunc(); else closeResetModalFunc();
+    }
+    if (event.key === 'Tab') {
+      const controls = [...modal.querySelectorAll('button, input, select')].filter(node => !node.disabled && node.type !== 'hidden' && node.getClientRects().length);
+      if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1).focus(); }
+      else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0].focus(); }
+    }
+  });
 
   checkAuth();
 });

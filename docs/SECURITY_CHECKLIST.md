@@ -11,6 +11,7 @@
 - [x] Query bound parameters; table/column identifiers từ metadata cứng.
 - [x] Render textContent; CSP, nosniff, frame/referrer headers.
 - [x] Login rate limit IP/account và giới hạn request đang xử lý.
+- [x] Đăng ký public chỉ Viewer, kiểm tra xác nhận mật khẩu, allowlist payload và UNIQUE database; limiter riêng và Origin validation.
 - [x] Đổi/reset mật khẩu dùng transaction và user lock; thu hồi session.
 - [x] Bảo vệ admin active cuối cùng và self-disable.
 - [x] Cookie lỗi không gây unhandled rejection.
@@ -30,6 +31,6 @@
 - [ ] Backup mã hóa, retention và restore drill.
 - [ ] Xác minh collector chỉ đọc Club logs; Node/cAdvisor có quyền đọc host rộng, chỉ chạy sau review.
 - [ ] Promtail EOL chỉ dùng khi chấp nhận rủi ro legacy; Alloy là mặc định.
-- [ ] Không có password public registration/MFA; MFA chưa nằm phạm vi nghiệp vụ hiện tại.
+- [ ] Email verification và MFA chưa triển khai; đăng ký mới tạo Viewer active theo yêu cầu. Viewer có quyền đọc nghiệp vụ theo RBAC hiện hành.
 
 Rate limiter theo process không dùng shared store; mô hình hiện tại một backend. Nếu scale nhiều replica cần thiết kế limiter chung. Không log metric label theo user/request ID để tránh lộ dữ liệu và cardinality. Không tuyên bố hệ thống không có lỗ hổng chỉ dựa vào audit dependency.

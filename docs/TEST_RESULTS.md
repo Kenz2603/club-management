@@ -1,5 +1,27 @@
 # Kết quả kiểm thử thực tế
 
+## Kiểm chứng trước push ngày 24/10/2026
+
+Windows, Node 22 qua fnm và Docker Desktop Linux containers. Lượt này bao gồm giao diện SaaS/Dark Mode, đăng ký Viewer, chọn CLB/thành viên theo tên và sửa header Nginx bị trùng. Không sử dụng database, volume hoặc credential Ubuntu.
+
+| Lệnh hoặc nhóm | Kết quả thực tế | Phạm vi |
+|---|---|---|
+| npm test | 316 PASS, 0 FAIL, 0 SKIP | Unit/API mock, chặn kết nối DB thật |
+| npm run test:syntax | 68 file hợp lệ | node --check |
+| npm run test:ui | 108 kịch bản PASS | Frontend thật, API mock; admin/manager/viewer, desktop/tablet/mobile, sáng/tối, lỗi/rỗng và select phân trang |
+| Docker build + CLUB_TEST_BACKEND_IMAGE + test:db | 23 PASS, 0 FAIL, 0 SKIP | MySQL 8.4 tmpfs; 4 bài Chromium thật, không dùng volume local |
+| Migration/schema/image | PASS | 001–007, verify --all, chạy up lại; backend healthy, non-root và đủ migration assets |
+| npm run test:config | 11 bước PASS | Compose, Prometheus/rules, Loki, Alloy, Promtail, Nginx HTTP/TLS và Bash |
+| npm run test:backup | 4 nhóm PASS | Backup/restore fixture thật và guard sai confirmation/checksum/nonempty target |
+| npm run test:observability | PASS | Grafana health, hai datasource và dashboard 12 panel |
+| npm run test:logging | 3 truy vấn PASS | Loki/Alloy fixture: backend error, HTTP 4xx/5xx và Nginx error được che nội dung |
+| npm audit --audit-level=high | 0 vulnerabilities | Dependency npm, không bao gồm image/OS CVE |
+| Liên kết Markdown local | 21 tài liệu hợp lệ | README và docs; không kiểm tra availability của URL ngoài |
+
+Log của lượt chạy được giữ cục bộ dưới artifacts/cleanup-*-20261024.log và config-validation.json, không đưa lên Git. Các ảnh minh chứng UI/SQL được giữ; chỉ xóa ảnh render QA, helper chụp báo cáo dùng một lần, fixture backup/log đã hết vòng đời và chứng chỉ thử nghiệm. PDF bản thảo 19/10 được giữ như tài liệu lịch sử, chưa tái tạo theo tính năng mới. Không khẳng định GitHub Actions hoặc hệ thống Ubuntu đã PASS từ kết quả local này.
+
+## Mốc kiểm chứng ngày 19/10/2026
+
 Ngày kiểm chứng: 2026-10-19 (Asia/Saigon). Windows, Node 22.23.3 qua fnm, Docker Desktop Linux containers, MySQL 8.4. Phạm vi: nhánh feature/club-management-completion và các file tài liệu/CI chuẩn bị cho commit cuối. Đây là kết quả local, không phải bằng chứng Ubuntu hoặc GitHub Actions đã PASS.
 
 | Lệnh hoặc nhóm | Kết quả đã chạy | Giới hạn |

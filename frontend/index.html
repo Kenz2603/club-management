@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="js/theme.js"></script>
   <title>Hệ thống Quản lý Câu lạc bộ</title>
   <link rel="stylesheet" href="css/home.css">
   <link rel="stylesheet" href="css/auth.css"><link rel="stylesheet" href="css/workspace.css">
+  <link rel="stylesheet" href="css/design.css">
 </head>
 <body>
   <header class="app-header">
     <div class="container header-container">
       <h1 class="app-title">Quản lý Câu lạc bộ</h1>
-      <div class="nav-actions"><a href="dashboard.html" class="nav-link">Tổng quan</a><a href="profile.html" class="nav-link">Hồ sơ</a>
+      <div class="nav-actions"><button type="button" id="theme-toggle" class="icon-btn" aria-label="Đổi giao diện sáng/tối"></button><a href="dashboard.html" class="nav-link">Tổng quan</a><a href="profile.html" class="nav-link">Hồ sơ</a>
         <div id="system-health" class="health-badge health-checking">
           <span class="health-dot"></span>
           <span id="health-text">Đang kiểm tra...</span>
@@ -27,6 +29,7 @@
   </header>
 
   <main class="container main-content">
+    <div class="public-hero"><p class="eyebrow">KẾT NỐI · THAM GIA · PHÁT TRIỂN</p><h1>Mỗi câu lạc bộ,<br>một cộng đồng.</h1><p>Khám phá các câu lạc bộ và kết nối với những hoạt động bạn quan tâm. Không gian quản lý tập trung dành cho cộng đồng của bạn.</p></div>
     <section class="section-card">
       <div class="section-header">
         <div>
@@ -61,6 +64,7 @@
     </div>
   </footer>
 
+  <script src="js/shell.js"></script>
   <script src="js/home.js"></script>
 </body>
 </html>

@@ -30,6 +30,7 @@ jobs:
       - run: node scripts/check-secrets.js --history-base=293cf25
       - run: npm audit --audit-level=high
       - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui
       - run: docker build -t club-management:verification .
       - run: npm run test:db
       - run: npm run test:backup

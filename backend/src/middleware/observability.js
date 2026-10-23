@@ -12,7 +12,7 @@ function logger(level, event, fields = {}) {
 function routeName(req) {
   const path = req.originalUrl.split('?')[0];
   if (/^\/api\/(health|ready|dashboard)$/.test(path)) return path;
-  if (/^\/api\/auth\/(login|logout|me|csrf|password)$/.test(path)) return path;
+  if (/^\/api\/auth\/(login|register|logout|me|csrf|password)$/.test(path)) return path;
   if (/^\/api\/(manage\/clubs|clubs|users|members|activities|meetings|contributions)(\/[0-9]+)?(\/(status|reset-password|summary))?$/.test(path)) return path.replace(/\/[0-9]+/g, '/:id');
   return path.startsWith('/api/') ? '/api/unmatched' : 'static';
 }

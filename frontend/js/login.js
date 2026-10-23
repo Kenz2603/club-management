@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.getElementById('submit-btn');
   const alertBox = document.getElementById('login-alert');
   const alertText = document.getElementById('login-alert-text');
+  if (new URLSearchParams(window.location.search).get('registered') === '1') {
+    document.getElementById('registration-notice').classList.remove('hidden');
+  }
 
   async function checkExistingAuth() {
     try {

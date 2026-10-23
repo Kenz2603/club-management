@@ -8,6 +8,15 @@ const { createCsrfToken } = require('../utils/session');
 
 const router = express.Router();
 
+router.post('/register', verifyCsrf, require('../middleware/registration-limiter').registrationLimiter, async (req, res, next) => {
+  try {
+    const user = await require('../services/registration.service').register(req.body);
+    return res.status(201).json({ success: true, message: 'Đăng ký thành công. Bạn có thể đăng nhập.', data: { user } });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post('/login', loginRateLimiter, verifyCsrf, async (req, res, next) => {
   try {
     const { username, password } = req.body || {};
