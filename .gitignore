@@ -14,7 +14,12 @@ backups/
 artifacts/
 test-results/
 playwright-report/
+
 __pycache__/
 *.py[cod]
 *.tmp
 ~$*.docx
+
+compose*.yaml.bak
+compose*.yaml.*.bak
+.venv-report/

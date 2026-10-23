@@ -9,7 +9,6 @@ services:
     networks: [monitoring_net]
     mem_limit: 384m
     cpus: 0.5
-    security_opt: [no-new-privileges:true]
   alloy:
     image: grafana/alloy:v1.11.0
     restart: unless-stopped
@@ -36,7 +35,6 @@ services:
     networks: [monitoring_net]
     mem_limit: 96m
     cpus: 0.2
-    security_opt: [no-new-privileges:true]
 volumes:
   loki_data:
   alloy_data:

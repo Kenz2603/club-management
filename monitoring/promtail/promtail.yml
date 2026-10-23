@@ -11,9 +11,15 @@ scrape_configs:
       - targets: [localhost]
         labels:
           service: backend
-          __path__: /var/log/club/backend/*-json.log
+          __path__: /var/log/club/backend/*.log
     pipeline_stages:
-      - docker: {}
+      - json:
+          expressions:
+            timestamp: timestamp
+            level: level
+      - timestamp:
+          source: timestamp
+          format: RFC3339Nano
   - job_name: club-nginx-access
     static_configs:
       - targets: [localhost]
